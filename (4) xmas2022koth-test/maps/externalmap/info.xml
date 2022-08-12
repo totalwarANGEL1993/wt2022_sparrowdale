@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<root>
+ <NameKey></NameKey>
+ <DescKey></DescKey>
+ <Name>WT2022 - Testmap</Name>
+ <Desc>Testmap for the WT2022.</Desc>
+ <SizeX>257</SizeX>
+ <SizeY>257</SizeY>
+ <MPFlag>false</MPFlag>
+ <MPPlayerCount>1</MPPlayerCount>
+ <MPGameOptionFlagSet>3</MPGameOptionFlagSet>
+ <MiniMapTextureName>data\graphics\Textures\GUI\MapPics\externalmap</MiniMapTextureName>
+ <Key>2</Key>
+ <GUID>
+  <Data>2ad38500-9e05-4d60-a5df-353ccefddcb3</Data>
+ </GUID>
+</root>
