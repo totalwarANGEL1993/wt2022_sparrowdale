@@ -12,7 +12,7 @@ WT2022.Victory = {
     Teams = {},
 
     StohlenResource = {
-        VictoryThreshold = 50000,
+        VictoryThreshold = 10000,
     },
     ControlledOutposts = {
         Timer = -1,
@@ -39,16 +39,22 @@ function WT2022.Victory.RegisterTheft(_TeamID, _Amount)
 end
 
 --- Registers that a team has conquered an outpost.
---- @param _ScriptName string Scriptname of outpost
 --- @param _TeamID     number ID of team
-function WT2022.Victory.RegisterClaim(_ScriptName, _TeamID)
+--- @param _ScriptName string Scriptname of outpost
+function WT2022.Victory.RegisterClaim(_TeamID, _ScriptName)
     WT2022.Victory:SaveClaimedOutpost(_ScriptName, _TeamID);
 end
 
---- Changes the total amount of outposts
+--- Changes the total amount of outposts to be claimed.
 --- @param _Amount number Amount of outposts
 function WT2022.Victory.SetOutpostAmount(_Amount)
     WT2022.Victory:SetMaximumOutpostAmount(_Amount);
+end
+
+--- Changes the total amount of resources to be stohlen.
+--- @param _Amount number Amount of Resources
+function WT2022.Victory:SetResourceAmount(_Amount)
+    WT2022.Victory:SetResourceVictoryAmount(_Amount)
 end
 
 --- Activates the timer for victory.
@@ -80,6 +86,7 @@ function WT2022.Victory:Setup(_T1P1, _T1P2, _DP1, _T2P1, _T2P2, _DP2)
         );
         self.ControllerJobID = JobID;
     end
+    self:OverwriteTechraceInterface();
 end
 
 function WT2022.Victory:Victory(_WinningTeam)
@@ -102,11 +109,15 @@ function WT2022.Victory:SetMaximumOutpostAmount(_Amount)
     self.ControlledOutposts.MaxAmount = _Amount;
 end
 
+function WT2022.Victory:SetResourceVictoryAmount(_Amount)
+    self.StohlenResource.VictoryThreshold = _Amount;
+end
+
 function WT2022.Victory:SaveClaimedOutpost(_ScriptName, _TeamID)
     for i= 1, 2 do
         for j= table.getn(self.ControlledOutposts[i]), 1, -1 do
             if self.ControlledOutposts[i][j] == _ScriptName then
-                table.remove(self.ControlledOutposts[i][j]);
+                table.remove(self.ControlledOutposts[i], j);
             end
         end
     end
@@ -154,62 +165,120 @@ function WT2022.Victory:CheckStohlenAmountFavoredTeam()
 end
 
 function WT2022.Victory:CheckOutpostAmountFavoredTeam()
-    self:DisplayCountdown();
     if self.ControlledOutposts.MaxAmount > 0 then
-        if self.ControlledOutposts[1] and self.ControlledOutposts[1] >= self.ControlledOutposts.MaxAmount then
-            self.ControlledOutposts.Timer = self.ControlledOutposts.Timer -1;
-            if self.ControlledOutposts.Timer == 0 then
-                return 1;
+        if self.ControlledOutposts[1] then
+            local Amount = table.getn(self.ControlledOutposts[1]);
+            if Amount >= self.ControlledOutposts.MaxAmount then
+                if self:IsTimerVisible() then
+                    self.ControlledOutposts.Timer = self.ControlledOutposts.Timer -1;
+                    if self.ControlledOutposts.Timer == 0 then
+                        return 1;
+                    end
+                end
             end
         end
-        if self.ControlledOutposts[2] and self.ControlledOutposts[2] >= self.ControlledOutposts.MaxAmount then
-            self.ControlledOutposts.Timer = self.ControlledOutposts.Timer -1;
-            if self.ControlledOutposts.Timer == 0 then
-                return 2;
+        if self.ControlledOutposts[2] then
+            local Amount = table.getn(self.ControlledOutposts[2]);
+            if Amount >= self.ControlledOutposts.MaxAmount then
+                self.ControlledOutposts.Timer = self.ControlledOutposts.Timer -1;
+                if self:IsTimerVisible() then
+                    self.ControlledOutposts.Timer = self.ControlledOutposts.Timer -1;
+                    if self.ControlledOutposts.Timer == 0 then
+                        return 2;
+                    end
+                end
             end
         end
     end
     return 0;
 end
 
-function WT2022.Victory:IsTimerVisible()
+function WT2022.Victory:DoesOneTeamControllAllOutposts()
     if self.ControlledOutposts.MaxAmount > 0 then
-        if self.ControlledOutposts[1] and self.ControlledOutposts[1] >= self.ControlledOutposts.MaxAmount
-        or self.ControlledOutposts[2] and self.ControlledOutposts[2] >= self.ControlledOutposts.MaxAmount then
-            return self.ControlledOutposts.Timer >= 0;
+        if (self.ControlledOutposts[1] and table.getn(self.ControlledOutposts[1]) >= self.ControlledOutposts.MaxAmount)
+        or (self.ControlledOutposts[2] and table.getn(self.ControlledOutposts[2]) >= self.ControlledOutposts.MaxAmount) then
+            return true;
         end
     end
     return false;
 end
 
-function WT2022.Victory:DisplayCountdown()
-    if not self:IsTimerVisible() then
-        -- Hide timer
-        return;
+function WT2022.Victory:IsTimerVisible()
+    if self:DoesOneTeamControllAllOutposts() then
+        return self.ControlledOutposts.Timer >= 0;
     end
-    -- Show timer
-    local TimeLeft = self.ControlledOutposts.Timer;
-    local TimeString = ConvertSecondsToString(TimeLeft);
-    -- ...
+    return false;
 end
 
 function WT2022.Victory:DisplayFavoredTeam()
-    local NameTeam1 = "Team Rot";
-    local NameTeam2 = "Team Blau";
-    local RatioProvinces = 0.75;
-    local RatioTheft = -0.25;
+    local Provinces1 = table.getn(self.ControlledOutposts[1]);
+    local Provinces2 = table.getn(self.ControlledOutposts[2]);
+    local Resources1 = math.max(self.StohlenResource[1] - self.StohlenResource[2], 0);
+    local Resources2 = math.max(self.StohlenResource[2] - self.StohlenResource[1], 0);
+    local OutpostMax = self.ControlledOutposts.MaxAmount;
+    local ResourceMax = self.StohlenResource.VictoryThreshold;
 
     self:HideAllPointRatios();
-    self:DisplayPointRation(1, "Eroberte Provinzen", NameTeam1, NameTeam2, RatioProvinces);
-    self:DisplayPointRation(2, "Gestohlene Rohstoffe", NameTeam1, NameTeam2, RatioTheft);
+    self:DisplayPointRation(1, "Eroberte Provinzen", Provinces1, Provinces2, OutpostMax);
+    self:DisplayPointRation(2, "Gestohlene Rohstoffe", Resources1, Resources2, ResourceMax);
+end
+
+function WT2022.Victory:OverwriteTechraceInterface()
+    WT2022.Victory.GUIUpdate_VCTechRaceColor = GUIUpdate_VCTechRaceColor;
+    GUIUpdate_VCTechRaceColor = function(_Color)
+    end
+
+    WT2022.Victory.GUIUpdate_VCTechRaceProgress = GUIUpdate_VCTechRaceProgress;
+    GUIUpdate_VCTechRaceProgress = function()
+    end
+
+    WT2022.Victory.GUIUpdate_GetTeamPoints = GUIUpdate_GetTeamPoints;
+    GUIUpdate_GetTeamPoints = function()
+    end
 end
 
 function WT2022.Victory:HideAllPointRatios()
-
+    local Screen = {GUI.GetScreenSize()}
+    XGUIEng.SetWidgetPositionAndSize("VCMP_Window", 0, 0, Screen[1], Screen[2]);
+    XGUIEng.ShowWidget("VCMP_Window", 1);
+    for i= 1, 8 do
+        XGUIEng.ShowWidget("VCMP_Team" ..i, 0);
+        XGUIEng.ShowWidget("VCMP_Team" ..i.. "_Shade", 0);
+    end
 end
 
-function WT2022.Victory:DisplayPointRation(_Index, _Name, _NameTeam1, _NameTeam2, _Ratio)
+function WT2022.Victory:DisplayPointRation(_Index, _Name, _Value1, _Value2, _Max)
+    local Screen = {GUI.GetScreenSize()}
+    local XRation = (1024/Screen[1]);
+    local YRation = (768/Screen[2]);
+    local ScreenX = Screen[1] * XRation;
+    local ScreenY = Screen[2] * YRation;
+    local W = 800 * XRation;
+    local H = 35 * YRation;
+    local H1 = 15 * YRation;
+    local X = (ScreenX/2) - (W/2);
+    local Y = 85 + ((40*YRation) * (_Index-1));
+    local X1 = 0;
+    local W1 = W * (_Value1/_Max);
+    local W2 = W * (_Value2/_Max);
+    local X2 = W - W2;
 
+    XGUIEng.SetWidgetPositionAndSize("VCMP_Team" .._Index, X, Y, W, H);
+    XGUIEng.SetWidgetPositionAndSize("VCMP_Team" .._Index.. "_Shade", X, Y, W, H);
+    XGUIEng.SetWidgetPositionAndSize("VCMP_Team" .._Index.. "Name", X, Y, W, H);
+    XGUIEng.SetWidgetPositionAndSize("VCMP_Team" .._Index.. "Player1", X1, H-H1, W1, H1);
+    XGUIEng.SetWidgetPositionAndSize("VCMP_Team" .._Index.. "Player2", X2, H-H1, W2, H1);
+    XGUIEng.SetMaterialColor("VCMP_Team" .._Index.. "Player1", 0, 125, 45, 45, 255);
+    XGUIEng.SetMaterialColor("VCMP_Team" .._Index.. "Player2", 0, 45, 45, 125, 255);
+    XGUIEng.SetMaterialColor("VCMP_Team" .._Index.. "Name", 0, 0, 0, 0, 0);
+
+    XGUIEng.ShowWidget("VCMP_Team" .._Index, 1);
+    XGUIEng.ShowWidget("VCMP_Team" .._Index.. "_Shade", 1);
+    XGUIEng.ShowWidget("VCMP_Team1" .._Index.. "PointBG", 0);
+    for i= 3, 8 do
+        XGUIEng.ShowWidget("VCMP_Team" .._Index.. "Player" ..i, 0);
+    end
+    XGUIEng.SetText("VCMP_Team" .._Index.. "Name", "@center " .._Name);
 end
 
 -- -------------------------------------------------------------------------- --

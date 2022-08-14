@@ -54,22 +54,21 @@ EMS_CustomMapConfig = {
 
         -- An outpost was claimed
         function GameCallback_User_OutpostClaimed(_ScriptName, _CapturingPlayer, _TeamOfCapturer, _OutpostPlayerID)
-            ManageDefencesForOutpust(_ScriptName, _CapturingPlayer, _TeamOfCapturer, _OutpostPlayerID);
+            GUIQuestTools.ToggleStopWatch(0, 0);
             WT2022.Victory.SetTimer(-1);
-            WT2022.Victory.RegisterClaim(_ScriptName, _TeamOfCapturer);
-            if WT2022.Victory:IsTimerVisible() then
+            WT2022.Victory.RegisterClaim(_TeamOfCapturer, _ScriptName);
+            if WT2022.Victory:DoesOneTeamControllAllOutposts() then
+                GUIQuestTools.ToggleStopWatch(5*60, 1);
                 WT2022.Victory.SetTimer(5*60);
             end
         end
 
         -- Upgrade of outpost has started
         function GameCallback_User_OutpostUpgradeStarted(_ScriptName, _UpgradeType, _NextUpgradeLevel)
-            ManageBeautificationForOutpust(_ScriptName, _UpgradeType, _NextUpgradeLevel, "Begin");
         end
 
         -- Upgrade of outpost has finished
         function GameCallback_User_OutpostUpgradeFinished(_ScriptName, _UpgradeType, _NewUpgradeLevel)
-            ManageBeautificationForOutpust(_ScriptName, _UpgradeType, _NewUpgradeLevel, "Finish");
         end
     end,
 
@@ -95,6 +94,11 @@ EMS_CustomMapConfig = {
                 table.insert(Teams[Team], i);
             end
         end
+        -- Check teams
+        if not AreTeamsValidFor2vs2(Teams) then
+            Message("Etwas stimmt nicht mit Team 1!");
+            return;
+        end
         -- Init systems
         WT2022.Delivery.Init(Teams[1][1], Teams[1][2], 5, Teams[2][1], Teams[2][2], 6);
         WT2022.Outpost.Init(Teams[1][1], Teams[1][2], 5, Teams[2][1], Teams[2][2], 6);
@@ -102,6 +106,8 @@ EMS_CustomMapConfig = {
         -- Create outposts
         WT2022.Outpost.Create("OP1", ResourceType.IronRaw, nil);
         WT2022.Outpost.Create("OP2", ResourceType.ClayRaw, nil);
+        WT2022.Victory:SetMaximumOutpostAmount(8);
+        WT2022.Victory:SetResourceAmount(5000);
     end,
 
     -- ********************************************************************************************
@@ -236,12 +242,12 @@ EMS_CustomMapConfig = {
     -- * -1 = Building markets is forbidden
     -- * 0 = Building markets is allowed
     -- * >0 = Markets are allowed and limited to the number given
-    Markets = 0,
+    Markets = 3,
 
     -- * Trade Limit
     -- * 0 = no trade limit
     -- * greater zero = maximum amount that you can buy in one single trade
-    TradeLimit = 5000,
+    TradeLimit = 3000,
 
     -- * TowerLevel
     -- * 0 = Towers forbidden
@@ -290,23 +296,14 @@ EMS_CustomMapConfig = {
 
 -- -------------------------------------------------------------------------- --
 
-OutpostConfiguration = {
-    ["SomeName"] = {
-        Beautifications = {
-
-        },
-        Defences = {
-
-        },
-    }
-}
-
-function ManageBeautificationForOutpust(_ScriptName, _UpgradeType, _State, _Level)
-
-end
-
-function ManageDefencesForOutpust(_ScriptName, _CapturingPlayer, _TeamOfCapturer, _OutpostPlayerID)
-
+function AreTeamsValidFor2vs2(_TeamData)
+    if not _TeamData[1] or table.getn(_TeamData[1]) ~= 2 then
+        return false;
+    end
+    if not _TeamData[2] or table.getn(_TeamData[2]) ~= 2 then
+        return false;
+    end
+    return true;
 end
 
 -- -------------------------------------------------------------------------- --
