@@ -166,7 +166,8 @@
         "XGUIEng",
         "InterfaceTool_CreateCostString",
         "InterfaceTool_HasPlayerEnoughResources_Feedback",
-        "Sync"
+        "Sync",
+        "GUIQuestTools"
     ],
     "Lua.diagnostics.disable": [
         "deprecated",

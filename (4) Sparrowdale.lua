@@ -25,6 +25,8 @@ EMS_CustomMapConfig = {
         SetupNormalWeatherGfxSet();
         LocalMusic.UseSet = DARKMOORMUSIC;
 
+        MakeBlockRocksInvisible();
+
         -- Deliver resource to the players
         function GameCallback_User_OutpostProduceResource(_ScriptName, _SpawnPoint, _OwningTeam, _ResourceType, _Amount)
             local Sender = WT2022.Outpost.Teams[_OwningTeam].Deliverer;
@@ -57,10 +59,12 @@ EMS_CustomMapConfig = {
 
         -- Upgrade of outpost has started
         function GameCallback_User_OutpostUpgradeStarted(_ScriptName, _UpgradeType, _NextUpgradeLevel)
+            OnOutpostUpgradeStarted(_ScriptName, _UpgradeType, _NextUpgradeLevel);
         end
 
         -- Upgrade of outpost has finished
         function GameCallback_User_OutpostUpgradeFinished(_ScriptName, _UpgradeType, _NewUpgradeLevel)
+            OnOutpostUpgradeFinished(_ScriptName, _UpgradeType, _NewUpgradeLevel);
         end
     end,
 
@@ -69,6 +73,7 @@ EMS_CustomMapConfig = {
     -- * Called at the end of the 10 seconds delay, after the host chose the rules and started
     -- ********************************************************************************************
     Callback_OnGameStart = function()
+        RemoveBlockRocksToMakeOutpostsAccessable();
     end,
 
     -- ********************************************************************************************
@@ -76,6 +81,8 @@ EMS_CustomMapConfig = {
     -- * Called when the peacetime counter reaches zero
     -- ********************************************************************************************
     Callback_OnPeacetimeEnded = function()
+        RemoveBlockRocksToMakePlayersAccessEachother();
+
         -- Get teams
         local Teams = {[1] = {1, 2}, [2] = {3, 4}};
         if XNetwork.Manager_DoesExist() == 1 then
@@ -88,15 +95,21 @@ EMS_CustomMapConfig = {
         end
         -- Check teams
         if not AreTeamsValidFor2vs2(Teams) then
-            Message("Etwas stimmt nicht mit Team 1!");
+            Message("Etwas stimmt nicht mit den Teams!");
             return;
         end
 
         -- Setup outposts
         WT2022.Delivery.Init(Teams[1][1], Teams[1][2], 5, Teams[2][1], Teams[2][2], 6);
         WT2022.Outpost.Init(Teams[1][1], Teams[1][2], 5, Teams[2][1], Teams[2][2], 6);
-        -- WT2022.Outpost.Create("OP1", ResourceType.IronRaw, nil);
-        -- WT2022.Outpost.Create("OP2", ResourceType.ClayRaw, nil);
+        WT2022.Outpost.Create("OP1", ResourceType.SulfurRaw, "Outpost 1");
+        WT2022.Outpost.Create("OP2", ResourceType.IronRaw, "Outpost 2");
+        WT2022.Outpost.Create("OP3", ResourceType.IronRaw, "Outpost 1");
+        WT2022.Outpost.Create("OP4", ResourceType.SulfurRaw, "Outpost 2");
+        WT2022.Outpost.Create("OP5", ResourceType.StoneRaw, "Outpost 5");
+        WT2022.Outpost.Create("OP6", ResourceType.ClayRaw, "Outpost 6");
+        WT2022.Outpost.Create("OP7", ResourceType.ClayRaw, "Outpost 7");
+        WT2022.Outpost.Create("OP8", ResourceType.StoneRaw, "Outpost 8");
 
         -- Setup victory conditions
         WT2022.Victory.Init(Teams[1][1], Teams[1][2], 5, Teams[2][1], Teams[2][2], 6);
@@ -108,7 +121,7 @@ EMS_CustomMapConfig = {
     -- * Peacetime
     -- * Number of minutes the players will be unable to attack each other
     -- ********************************************************************************************
-    Peacetime = 1,
+    Peacetime = 15,
 
     -- ********************************************************************************************
     -- * GameMode
@@ -287,6 +300,34 @@ EMS_CustomMapConfig = {
     Mary_de_Mortfichet = 1,
     Kala               = 1,
 };
+
+-- -------------------------------------------------------------------------- --
+
+function MakeBlockRocksInvisible()
+    for i= 1, 26 do
+        Logic.SetModelAndAnimSet(GetID("BlockRock" ..i), Models.Effects_XF_ExtractStone);
+    end
+end
+
+function RemoveBlockRocksToMakeOutpostsAccessable()
+    for i= 11, 26 do
+        DestroyEntity("BlockRock" ..i);
+    end
+end
+
+function RemoveBlockRocksToMakePlayersAccessEachother()
+    for i= 1, 10 do
+        DestroyEntity("BlockRock" ..i);
+    end
+end
+
+function OnOutpostUpgradeStarted(_ScriptName, _UpgradeType, _NextUpgradeLevel)
+
+end
+
+function OnOutpostUpgradeFinished(_ScriptName, _UpgradeType, _NewUpgradeLevel)
+
+end
 
 -- -------------------------------------------------------------------------- --
 
