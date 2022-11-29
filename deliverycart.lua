@@ -149,17 +149,19 @@ end
 function Delivery_Internal_OnEntityHurt()
     local Attacker = Event.GetEntityID1();
     local Attacked = Event.GetEntityID2();
-    local AttackedName = Logic.GetEntityName(Attacked);
-    if WT2022.Delivery.Carts[AttackedName] then
-        if Logic.EntityGetType(Attacker) == Entities.PU_Thief then
-            local AttackerPlayerID = Logic.EntityGetPlayer(Attacker);
-            local Position = GetPosition(AttackedName);
-            local Deliverer = WT2022.Delivery:GetDelivererPlayerID(AttackerPlayerID);
-            if Deliverer > 0 then
-                if Logic.IsEntityMoving(Attacked) == true then
-                    Logic.MoveSettler(Attacked, Position.X, Position.Y);
+    if Attacker and Attacked then
+        local AttackedName = Logic.GetEntityName(Attacked);
+        if WT2022.Delivery.Carts[AttackedName] then
+            if Logic.GetEntityType(Attacker) == Entities.PU_Thief then
+                local AttackerPlayerID = Logic.EntityGetPlayer(Attacker);
+                local Position = GetPosition(AttackedName);
+                local Deliverer = WT2022.Delivery:GetDelivererPlayerID(AttackerPlayerID);
+                if Deliverer > 0 then
+                    if Logic.IsEntityMoving(Attacked) == true then
+                        Logic.MoveSettler(Attacked, Position.X, Position.Y);
+                    end
+                    WT2022.Delivery:ChangeDeliveryReceiver(AttackedName, Deliverer, AttackerPlayerID);
                 end
-                WT2022.Delivery:ChangeDeliveryReceiver(AttackedName, Deliverer, AttackerPlayerID);
             end
         end
     end

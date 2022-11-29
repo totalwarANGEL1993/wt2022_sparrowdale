@@ -167,7 +167,9 @@
         "InterfaceTool_CreateCostString",
         "InterfaceTool_HasPlayerEnoughResources_Feedback",
         "Sync",
-        "GUIQuestTools"
+        "GUIQuestTools",
+        "AddPeriodicRain",
+        "StartSimpleJob"
     ],
     "Lua.diagnostics.disable": [
         "deprecated",

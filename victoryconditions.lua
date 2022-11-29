@@ -67,8 +67,25 @@ end
 
 function WT2022.Victory:Setup(_T1P1, _T1P2, _DP1, _T2P1, _T2P2, _DP2)
     -- Setup diplomacy
+    MultiplayerTools.Teams = {
+        [1] = {_T1P1, _T1P2},
+        [2] = {_T2P1, _T2P2},
+    }
     self.Teams[1] = {_T1P1, _T1P2, Deliverer = _DP1};
     self.Teams[2] = {_T2P1, _T2P2, Deliverer = _DP2};
+    SetFriendly(_T1P1, _T2P1);
+    SetFriendly(_T1P2, _T2P2);
+    SetHostile(_T1P1, _T2P1);
+    SetHostile(_T1P2, _T2P2);
+    -- Set exploration
+    Logic.SetShareExplorationWithPlayerFlag(_T1P1, _T1P2, 1);
+    Logic.SetShareExplorationWithPlayerFlag(_T1P2, _T1P1, 1);
+    Logic.SetShareExplorationWithPlayerFlag(_T2P1, _T2P2, 1);
+    Logic.SetShareExplorationWithPlayerFlag(_T2P2, _T2P1, 1);
+    Logic.SetShareExplorationWithPlayerFlag(_T1P1, _T2P1, 0);
+    Logic.SetShareExplorationWithPlayerFlag(_T1P2, _T2P2, 0);
+    Logic.SetShareExplorationWithPlayerFlag(_T2P1, _T1P1, 0);
+    Logic.SetShareExplorationWithPlayerFlag(_T2P2, _T1P2, 0);
 
     self.StohlenResource[1] = 0;
     self.StohlenResource[2] = 0;
@@ -155,10 +172,10 @@ function WT2022.Victory:CheckLastStandingTeam()
 end
 
 function WT2022.Victory:CheckStohlenAmountFavoredTeam()
-    if self.StohlenResource[1] - self.StohlenResource[2] > self.StohlenResource.VictoryThreshold then
+    if self.StohlenResource[1] - self.StohlenResource[2] >= self.StohlenResource.VictoryThreshold then
         return 1;
     end
-    if self.StohlenResource[2] - self.StohlenResource[1] > self.StohlenResource.VictoryThreshold then
+    if self.StohlenResource[2] - self.StohlenResource[1] >= self.StohlenResource.VictoryThreshold then
         return 2;
     end
     return 0;

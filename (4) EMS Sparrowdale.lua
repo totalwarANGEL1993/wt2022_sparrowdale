@@ -23,9 +23,16 @@ EMS_CustomMapConfig = {
     Callback_OnMapStart = function()
         AddPeriodicSummer(60);
         SetupNormalWeatherGfxSet();
+        AddPeriodicSummer(300);
+        AddPeriodicRain(120);
         LocalMusic.UseSet = DARKMOORMUSIC;
 
+        StartSimpleJob("OutpostPitFiller");
         MakeBlockRocksInvisible();
+        CreateWoodpilesForPlayers();
+
+        Display.SetPlayerColorMapping(7, 14);
+        Display.SetPlayerColorMapping(8, 14);
 
         -- Deliver resource to the players
         function GameCallback_User_OutpostProduceResource(_ScriptName, _SpawnPoint, _OwningTeam, _ResourceType, _Amount)
@@ -73,7 +80,6 @@ EMS_CustomMapConfig = {
     -- * Called at the end of the 10 seconds delay, after the host chose the rules and started
     -- ********************************************************************************************
     Callback_OnGameStart = function()
-        RemoveBlockRocksToMakeOutpostsAccessable();
     end,
 
     -- ********************************************************************************************
@@ -82,34 +88,22 @@ EMS_CustomMapConfig = {
     -- ********************************************************************************************
     Callback_OnPeacetimeEnded = function()
         RemoveBlockRocksToMakePlayersAccessEachother();
+        RemoveBlockRocksToMakeOutpostsAccessable();
+        StartRain(30);
 
         -- Get teams
         local Teams = {[1] = {1, 2}, [2] = {3, 4}};
-        if XNetwork.Manager_DoesExist() == 1 then
-            Teams = {};
-            for i= 1, 4 do
-                local Team = XNetwork.GameInformation_GetPlayerTeam(i);
-                Teams[Team] = Teams[Team] or {};
-                table.insert(Teams[Team], i);
-            end
-        end
-        -- Check teams
-        if not AreTeamsValidFor2vs2(Teams) then
-            Message("Etwas stimmt nicht mit den Teams!");
-            return;
-        end
-
         -- Setup outposts
         WT2022.Delivery.Init(Teams[1][1], Teams[1][2], 5, Teams[2][1], Teams[2][2], 6);
         WT2022.Outpost.Init(Teams[1][1], Teams[1][2], 5, Teams[2][1], Teams[2][2], 6);
-        WT2022.Outpost.Create("OP1", ResourceType.SulfurRaw, "Outpost 1");
-        WT2022.Outpost.Create("OP2", ResourceType.IronRaw, "Outpost 2");
-        WT2022.Outpost.Create("OP3", ResourceType.IronRaw, "Outpost 1");
-        WT2022.Outpost.Create("OP4", ResourceType.SulfurRaw, "Outpost 2");
-        WT2022.Outpost.Create("OP5", ResourceType.StoneRaw, "Outpost 5");
-        WT2022.Outpost.Create("OP6", ResourceType.ClayRaw, "Outpost 6");
-        WT2022.Outpost.Create("OP7", ResourceType.ClayRaw, "Outpost 7");
-        WT2022.Outpost.Create("OP8", ResourceType.StoneRaw, "Outpost 8");
+        WT2022.Outpost.Create("OP1", ResourceType.SulfurRaw, "Oxford");
+        WT2022.Outpost.Create("OP2", ResourceType.IronRaw,   "Cheltenham");
+        WT2022.Outpost.Create("OP3", ResourceType.IronRaw,   "Cambridge");
+        WT2022.Outpost.Create("OP4", ResourceType.SulfurRaw, "Norwich");
+        WT2022.Outpost.Create("OP5", ResourceType.StoneRaw,  "Reading");
+        WT2022.Outpost.Create("OP6", ResourceType.ClayRaw,   "Southampton");
+        WT2022.Outpost.Create("OP7", ResourceType.ClayRaw,   "Birmingham");
+        WT2022.Outpost.Create("OP8", ResourceType.StoneRaw,  "Peterborough");
 
         -- Setup victory conditions
         WT2022.Victory.Init(Teams[1][1], Teams[1][2], 5, Teams[2][1], Teams[2][2], 6);
@@ -121,7 +115,7 @@ EMS_CustomMapConfig = {
     -- * Peacetime
     -- * Number of minutes the players will be unable to attack each other
     -- ********************************************************************************************
-    Peacetime = 15,
+    Peacetime = 20,
 
     -- ********************************************************************************************
     -- * GameMode
@@ -254,7 +248,7 @@ EMS_CustomMapConfig = {
     -- * Trade Limit
     -- * 0 = no trade limit
     -- * greater zero = maximum amount that you can buy in one single trade
-    TradeLimit = 3000,
+    TradeLimit = 5000,
 
     -- * TowerLevel
     -- * 0 = Towers forbidden
@@ -266,7 +260,7 @@ EMS_CustomMapConfig = {
     -- * TowerLimit
     -- * 0  = no tower limit
     -- * >0 = towers are limited to the number given
-    TowerLimit = 5,
+    TowerLimit = 0,
 
     -- * WeatherChangeLockTimer
     -- * Minutes for how long the weather can't be changed directly again after a weatherchange happened
@@ -303,22 +297,68 @@ EMS_CustomMapConfig = {
 
 -- -------------------------------------------------------------------------- --
 
+function OutpostPitFiller()
+    for i= 1, 8 do
+        if IsExisting("OP" ..i.. "_Pit") then
+            if IsExisting("OP" ..i.. "_Mine") then
+                local ID = GetID("OP" ..i.. "_Pit");
+                if Logic.GetResourceDoodadGoodAmount(ID) < 999999 then
+                    Logic.SetResourceDoodadGoodAmount(ID, 999999);
+                end
+            else
+                DestroyEntity("OP" ..i.. "_Pit");
+            end
+        end
+    end
+end
+
+function CreateWoodpilesForPlayers()
+    for i= 1, 4 do
+        CreateWoodPile("WoodPile1_P"..i, 25000);
+        CreateWoodPile("WoodPile2_P"..i, 25000);
+    end
+end
+
 function MakeBlockRocksInvisible()
-    for i= 1, 26 do
-        Logic.SetModelAndAnimSet(GetID("BlockRock" ..i), Models.Effects_XF_ExtractStone);
+    Logic.SetModelAndAnimSet(GetID("RockBlock0_1"), Models.Effects_XF_ExtractStone);
+    Logic.SetModelAndAnimSet(GetID("RockBlock0_2"), Models.Effects_XF_ExtractStone);
+    for i= 1, 4 do
+        for j= 1, 6 do
+            Logic.SetModelAndAnimSet(GetID("RockBlock" ..i.. "_" ..j), Models.Effects_XF_ExtractStone);
+        end
     end
 end
 
 function RemoveBlockRocksToMakeOutpostsAccessable()
-    for i= 11, 26 do
-        DestroyEntity("BlockRock" ..i);
-    end
+    DestroyEntity("RockBlock1_6");
+    DestroyEntity("RockBlock1_5");
+    DestroyEntity("RockBlock1_3");
+    DestroyEntity("RockBlock1_2");
+    DestroyEntity("RockBlock2_5");
+    DestroyEntity("RockBlock2_4");
+    DestroyEntity("RockBlock2_3");
+    DestroyEntity("RockBlock2_2");
+    DestroyEntity("RockBlock3_6");
+    DestroyEntity("RockBlock3_5");
+    DestroyEntity("RockBlock3_2");
+    DestroyEntity("RockBlock3_1");
+    DestroyEntity("RockBlock4_6");
+    DestroyEntity("RockBlock4_5");
+    DestroyEntity("RockBlock4_3");
+    DestroyEntity("RockBlock4_1");
 end
 
 function RemoveBlockRocksToMakePlayersAccessEachother()
-    for i= 1, 10 do
-        DestroyEntity("BlockRock" ..i);
-    end
+    DestroyEntity("RockBlock0_1");
+    DestroyEntity("RockBlock0_2");
+    DestroyEntity("RockBlock1_4");
+    DestroyEntity("RockBlock1_1");
+    DestroyEntity("RockBlock2_6");
+    DestroyEntity("RockBlock2_1");
+    DestroyEntity("RockBlock3_4");
+    DestroyEntity("RockBlock3_3");
+    DestroyEntity("RockBlock4_4");
+    DestroyEntity("RockBlock4_2");
 end
 
 function OnOutpostUpgradeStarted(_ScriptName, _UpgradeType, _NextUpgradeLevel)
@@ -327,18 +367,6 @@ end
 
 function OnOutpostUpgradeFinished(_ScriptName, _UpgradeType, _NewUpgradeLevel)
 
-end
-
--- -------------------------------------------------------------------------- --
-
-function AreTeamsValidFor2vs2(_TeamData)
-    if not _TeamData[1] or table.getn(_TeamData[1]) ~= 2 then
-        return false;
-    end
-    if not _TeamData[2] or table.getn(_TeamData[2]) ~= 2 then
-        return false;
-    end
-    return true;
 end
 
 -- -------------------------------------------------------------------------- --
@@ -471,14 +499,14 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
     self.SequenceID = self.SequenceID +1;
     self.Outposts[_ScriptName] = {
         Name = _DisplayName or ("Province " ..self.SequenceID),
-        Health = 2500,
-        MaxHealth = 2500,
-        ArmorFactor = 6,
+        Health = 3000,
+        MaxHealth = 3000,
+        ArmorFactor = 4,
         DoorPos = _DoorPos,
         ResourceType = _ResourceType,
         OwningTeam = 0,
         ProductCount = 0,
-        ProductionValue = 1,
+        ProductionValue = 3,
         DeliverThreshold = 500,
         Explorer = 0,
 
@@ -498,14 +526,14 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
                     Costs = {[ResourceType.Stone] = 600, [ResourceType.Wood] = 400},
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
-                        WT2022.Outpost.Outposts[_ScriptName].ProductionValue = Data.ProductionValue + 2;
+                        WT2022.Outpost.Outposts[_ScriptName].ProductionValue = Data.ProductionValue + 1;
                     end
                 },
                 [3] = {
                     Costs = {[ResourceType.Wood] = 1000, [ResourceType.Sulfur] = 600},
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
-                        WT2022.Outpost.Outposts[_ScriptName].ProductionValue = Data.ProductionValue + 3;
+                        WT2022.Outpost.Outposts[_ScriptName].ProductionValue = Data.ProductionValue + 1;
                     end
                 },
             },
@@ -513,21 +541,21 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
             [2] = {
                 Level = 0,
                 [1] = {
-                    Costs = {[ResourceType.Gold] = 350, [ResourceType.Iron] = 250},
+                    Costs = {[ResourceType.Gold] = 600, [ResourceType.Iron] = 600},
                     Action = function(_ScriptName, _Level)
                         local X, Y = 100, 0;
                         WT2022.Outpost:CreateDefender(_ScriptName, X, Y);
                     end
                 },
                 [2] = {
-                    Costs = {[ResourceType.Gold] = 500, [ResourceType.Wood] = 500},
+                    Costs = {[ResourceType.Gold] = 1500, [ResourceType.Wood] = 1500},
                     Action = function(_ScriptName, _Level)
                         local X, Y = -100, 0;
                         WT2022.Outpost:CreateDefender(_ScriptName, X, Y);
                     end
                 },
                 [3] = {
-                    Costs = {[ResourceType.Gold] = 750, [ResourceType.Iron] = 850},
+                    Costs = {[ResourceType.Gold] = 2750, [ResourceType.Iron] = 2850},
                     Action = function(_ScriptName, _Level)
                         local X, Y = 0, 100;
                         WT2022.Outpost:CreateDefender(_ScriptName, X, Y);
@@ -541,7 +569,7 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
                     Costs = {[ResourceType.Stone] = 150, [ResourceType.Clay] = 450},
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
-                        WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 2;
+                        WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 1;
                         WT2022.Outpost.Outposts[_ScriptName].MaxHealth = math.ceil(Data.MaxHealth * 1.2);
                         WT2022.Outpost.Outposts[_ScriptName].Health = Data.MaxHealth;
                         SVLib.SetHPOfEntity(GetID(_ScriptName), 600);
@@ -551,7 +579,7 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
                     Costs = {[ResourceType.Stone] = 250, [ResourceType.Iron] = 750},
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
-                        WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 2;
+                        WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 1;
                         WT2022.Outpost.Outposts[_ScriptName].MaxHealth = math.ceil(Data.MaxHealth * 1.2);
                         WT2022.Outpost.Outposts[_ScriptName].Health = Data.MaxHealth;
                         SVLib.SetHPOfEntity(GetID(_ScriptName), 600);
@@ -561,7 +589,7 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
                     Costs = {[ResourceType.Stone] = 650, [ResourceType.Clay] = 950},
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
-                        WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 2;
+                        WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 1;
                         WT2022.Outpost.Outposts[_ScriptName].MaxHealth = math.ceil(Data.MaxHealth * 1.2);
                         WT2022.Outpost.Outposts[_ScriptName].Health = Data.MaxHealth;
                         SVLib.SetHPOfEntity(GetID(_ScriptName), 600);
@@ -697,7 +725,7 @@ function WT2022.Outpost:CreateDefender(_ScriptName, _OffsetX, _OffsetY)
     if not self.Outposts[_ScriptName] then
         return;
     end
-    local PlayerID = self.Outposts[_ScriptName].Deliverer;
+    local PlayerID = Logic.EntityGetPlayer(GetID(_ScriptName));
     local TeamID = self.Outposts[_ScriptName].OwningTeam;
     if TeamID == 0 then
         return;
@@ -1143,24 +1171,26 @@ end
 function Outpost_Internal_OnEntityHurt()
     local Attacker = Event.GetEntityID1();
     local Attacked = Event.GetEntityID2();
-    local AttackedName = Logic.GetEntityName(Attacked);
-    if WT2022.Outpost.Outposts[AttackedName] then
-        local AttackingPlayer = Logic.EntityGetPlayer(Attacker);
-        local OldPlayer = Logic.EntityGetPlayer(Attacked);
-        local Damage = Logic.GetEntityDamage(Attacker);
-        local Armor = 1/WT2022.Outpost.Outposts[AttackedName].ArmorFactor;
-        local RealHealth = Logic.GetEntityMaxHealth(Attacked);
-        local MaxHealth = WT2022.Outpost.Outposts[AttackedName].MaxHealth;
-        local MinHealth = math.ceil(MaxHealth * 0.25);
-        local FakeHealth = WT2022.Outpost.Outposts[AttackedName].Health;
-        FakeHealth = FakeHealth - (Damage * Armor);
-        WT2022.Outpost.Outposts[AttackedName].Health = math.max(MinHealth, FakeHealth);
-        local RelativeHealth = RealHealth * (FakeHealth/MaxHealth);
-        SVLib.SetHPOfEntity(Attacked, RelativeHealth);
+    if Attacker and Attacked then
+        local AttackedName = Logic.GetEntityName(Attacked);
+        if WT2022.Outpost.Outposts[AttackedName] then
+            local AttackingPlayer = Logic.EntityGetPlayer(Attacker);
+            local OldPlayer = Logic.EntityGetPlayer(Attacked);
+            local Damage = Logic.GetEntityDamage(Attacker);
+            local Armor = 1/WT2022.Outpost.Outposts[AttackedName].ArmorFactor;
+            local RealHealth = Logic.GetEntityMaxHealth(Attacked);
+            local MaxHealth = WT2022.Outpost.Outposts[AttackedName].MaxHealth;
+            local MinHealth = math.ceil(MaxHealth * 0.25);
+            local FakeHealth = WT2022.Outpost.Outposts[AttackedName].Health;
+            FakeHealth = FakeHealth - (Damage * Armor);
+            WT2022.Outpost.Outposts[AttackedName].Health = math.max(MinHealth, FakeHealth);
+            local RelativeHealth = RealHealth * (FakeHealth/MaxHealth);
+            SVLib.SetHPOfEntity(Attacked, math.ceil(RelativeHealth));
 
-        if WT2022.Outpost:CanBeClaimed(AttackedName, OldPlayer, AttackingPlayer) then
-            local TeamOfAttacker = WT2022.Outpost:GetTeamOfPlayer(AttackingPlayer);
-            WT2022.Outpost:ClaimOutpost(AttackedName, OldPlayer, AttackingPlayer, TeamOfAttacker);
+            if WT2022.Outpost:CanBeClaimed(AttackedName, OldPlayer, AttackingPlayer) then
+                local TeamOfAttacker = WT2022.Outpost:GetTeamOfPlayer(AttackingPlayer);
+                WT2022.Outpost:ClaimOutpost(AttackedName, OldPlayer, AttackingPlayer, TeamOfAttacker);
+            end
         end
     end
 end
@@ -1355,17 +1385,19 @@ end
 function Delivery_Internal_OnEntityHurt()
     local Attacker = Event.GetEntityID1();
     local Attacked = Event.GetEntityID2();
-    local AttackedName = Logic.GetEntityName(Attacked);
-    if WT2022.Delivery.Carts[AttackedName] then
-        if Logic.EntityGetType(Attacker) == Entities.PU_Thief then
-            local AttackerPlayerID = Logic.EntityGetPlayer(Attacker);
-            local Position = GetPosition(AttackedName);
-            local Deliverer = WT2022.Delivery:GetDelivererPlayerID(AttackerPlayerID);
-            if Deliverer > 0 then
-                if Logic.IsEntityMoving(Attacked) == true then
-                    Logic.MoveSettler(Attacked, Position.X, Position.Y);
+    if Attacker and Attacked then
+        local AttackedName = Logic.GetEntityName(Attacked);
+        if WT2022.Delivery.Carts[AttackedName] then
+            if Logic.GetEntityType(Attacker) == Entities.PU_Thief then
+                local AttackerPlayerID = Logic.EntityGetPlayer(Attacker);
+                local Position = GetPosition(AttackedName);
+                local Deliverer = WT2022.Delivery:GetDelivererPlayerID(AttackerPlayerID);
+                if Deliverer > 0 then
+                    if Logic.IsEntityMoving(Attacked) == true then
+                        Logic.MoveSettler(Attacked, Position.X, Position.Y);
+                    end
+                    WT2022.Delivery:ChangeDeliveryReceiver(AttackedName, Deliverer, AttackerPlayerID);
                 end
-                WT2022.Delivery:ChangeDeliveryReceiver(AttackedName, Deliverer, AttackerPlayerID);
             end
         end
     end
@@ -1461,8 +1493,25 @@ end
 
 function WT2022.Victory:Setup(_T1P1, _T1P2, _DP1, _T2P1, _T2P2, _DP2)
     -- Setup diplomacy
+    MultiplayerTools.Teams = {
+        [1] = {_T1P1, _T1P2},
+        [2] = {_T2P1, _T2P2},
+    }
     self.Teams[1] = {_T1P1, _T1P2, Deliverer = _DP1};
     self.Teams[2] = {_T2P1, _T2P2, Deliverer = _DP2};
+    SetFriendly(_T1P1, _T2P1);
+    SetFriendly(_T1P2, _T2P2);
+    SetHostile(_T1P1, _T2P1);
+    SetHostile(_T1P2, _T2P2);
+    -- Set exploration
+    Logic.SetShareExplorationWithPlayerFlag(_T1P1, _T1P2, 1);
+    Logic.SetShareExplorationWithPlayerFlag(_T1P2, _T1P1, 1);
+    Logic.SetShareExplorationWithPlayerFlag(_T2P1, _T2P2, 1);
+    Logic.SetShareExplorationWithPlayerFlag(_T2P2, _T2P1, 1);
+    Logic.SetShareExplorationWithPlayerFlag(_T1P1, _T2P1, 0);
+    Logic.SetShareExplorationWithPlayerFlag(_T1P2, _T2P2, 0);
+    Logic.SetShareExplorationWithPlayerFlag(_T2P1, _T1P1, 0);
+    Logic.SetShareExplorationWithPlayerFlag(_T2P2, _T1P2, 0);
 
     self.StohlenResource[1] = 0;
     self.StohlenResource[2] = 0;
@@ -1549,10 +1598,10 @@ function WT2022.Victory:CheckLastStandingTeam()
 end
 
 function WT2022.Victory:CheckStohlenAmountFavoredTeam()
-    if self.StohlenResource[1] - self.StohlenResource[2] > self.StohlenResource.VictoryThreshold then
+    if self.StohlenResource[1] - self.StohlenResource[2] >= self.StohlenResource.VictoryThreshold then
         return 1;
     end
-    if self.StohlenResource[2] - self.StohlenResource[1] > self.StohlenResource.VictoryThreshold then
+    if self.StohlenResource[2] - self.StohlenResource[1] >= self.StohlenResource.VictoryThreshold then
         return 2;
     end
     return 0;
@@ -1823,6 +1872,34 @@ function RemoveResourcesFromPlayer(_PlayerID, _Costs)
     if _Costs[ResourceType.Sulfur] ~= nil and _Costs[ResourceType.Sulfur] > 0 and Sulfur >= _Costs[ResourceType.Sulfur] then		
 		AddSulfur(_PlayerID, _Costs[ResourceType.Sulfur] * (-1));
 	end
+end
+
+function CreateWoodPile( _posEntity, _resources )
+    assert( type( _posEntity ) == "string" );
+    assert( type( _resources ) == "number" );
+    gvWoodPiles = gvWoodPiles or {
+        JobID = StartSimpleJob("ControlWoodPiles"),
+    };
+    local pos = GetPosition( _posEntity );
+    local pile_id = Logic.CreateEntity( Entities.XD_SingnalFireOff, pos.X, pos.Y, 0, 0 );
+    SetEntityName( pile_id, _posEntity.."_WoodPile" );
+    ReplaceEntity( _posEntity, Entities.XD_ResourceTree );
+    Logic.SetResourceDoodadGoodAmount( GetEntityId( _posEntity ), _resources*10 );
+    table.insert( gvWoodPiles, { ResourceEntity = _posEntity, PileEntity = _posEntity.."_WoodPile", ResourceLimit = _resources*9 } );
+end
+function ControlWoodPiles()
+    for i = table.getn( gvWoodPiles ),1,-1 do
+        if Logic.GetResourceDoodadGoodAmount( GetEntityId( gvWoodPiles[i].ResourceEntity ) ) <= gvWoodPiles[i].ResourceLimit then
+            DestroyWoodPile( gvWoodPiles[i], i );
+        end
+    end
+end
+function DestroyWoodPile( _piletable, _index )
+    local pos = GetPosition( _piletable.ResourceEntity );
+    DestroyEntity( _piletable.ResourceEntity );
+    DestroyEntity( _piletable.PileEntity );
+    Logic.CreateEffect( GGL_Effects.FXCrushBuilding, pos.X, pos.Y, 0 );
+    table.remove( gvWoodPiles, _index )
 end
 
 ---

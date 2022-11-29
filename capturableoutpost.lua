@@ -126,14 +126,14 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
     self.SequenceID = self.SequenceID +1;
     self.Outposts[_ScriptName] = {
         Name = _DisplayName or ("Province " ..self.SequenceID),
-        Health = 2500,
-        MaxHealth = 2500,
-        ArmorFactor = 6,
+        Health = 3000,
+        MaxHealth = 3000,
+        ArmorFactor = 4,
         DoorPos = _DoorPos,
         ResourceType = _ResourceType,
         OwningTeam = 0,
         ProductCount = 0,
-        ProductionValue = 1,
+        ProductionValue = 3,
         DeliverThreshold = 500,
         Explorer = 0,
 
@@ -153,14 +153,14 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
                     Costs = {[ResourceType.Stone] = 600, [ResourceType.Wood] = 400},
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
-                        WT2022.Outpost.Outposts[_ScriptName].ProductionValue = Data.ProductionValue + 2;
+                        WT2022.Outpost.Outposts[_ScriptName].ProductionValue = Data.ProductionValue + 1;
                     end
                 },
                 [3] = {
                     Costs = {[ResourceType.Wood] = 1000, [ResourceType.Sulfur] = 600},
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
-                        WT2022.Outpost.Outposts[_ScriptName].ProductionValue = Data.ProductionValue + 3;
+                        WT2022.Outpost.Outposts[_ScriptName].ProductionValue = Data.ProductionValue + 1;
                     end
                 },
             },
@@ -168,21 +168,21 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
             [2] = {
                 Level = 0,
                 [1] = {
-                    Costs = {[ResourceType.Gold] = 350, [ResourceType.Iron] = 250},
+                    Costs = {[ResourceType.Gold] = 600, [ResourceType.Iron] = 600},
                     Action = function(_ScriptName, _Level)
                         local X, Y = 100, 0;
                         WT2022.Outpost:CreateDefender(_ScriptName, X, Y);
                     end
                 },
                 [2] = {
-                    Costs = {[ResourceType.Gold] = 500, [ResourceType.Wood] = 500},
+                    Costs = {[ResourceType.Gold] = 1500, [ResourceType.Wood] = 1500},
                     Action = function(_ScriptName, _Level)
                         local X, Y = -100, 0;
                         WT2022.Outpost:CreateDefender(_ScriptName, X, Y);
                     end
                 },
                 [3] = {
-                    Costs = {[ResourceType.Gold] = 750, [ResourceType.Iron] = 850},
+                    Costs = {[ResourceType.Gold] = 2750, [ResourceType.Iron] = 2850},
                     Action = function(_ScriptName, _Level)
                         local X, Y = 0, 100;
                         WT2022.Outpost:CreateDefender(_ScriptName, X, Y);
@@ -196,7 +196,7 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
                     Costs = {[ResourceType.Stone] = 150, [ResourceType.Clay] = 450},
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
-                        WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 2;
+                        WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 1;
                         WT2022.Outpost.Outposts[_ScriptName].MaxHealth = math.ceil(Data.MaxHealth * 1.2);
                         WT2022.Outpost.Outposts[_ScriptName].Health = Data.MaxHealth;
                         SVLib.SetHPOfEntity(GetID(_ScriptName), 600);
@@ -206,7 +206,7 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
                     Costs = {[ResourceType.Stone] = 250, [ResourceType.Iron] = 750},
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
-                        WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 2;
+                        WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 1;
                         WT2022.Outpost.Outposts[_ScriptName].MaxHealth = math.ceil(Data.MaxHealth * 1.2);
                         WT2022.Outpost.Outposts[_ScriptName].Health = Data.MaxHealth;
                         SVLib.SetHPOfEntity(GetID(_ScriptName), 600);
@@ -216,7 +216,7 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
                     Costs = {[ResourceType.Stone] = 650, [ResourceType.Clay] = 950},
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
-                        WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 2;
+                        WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 1;
                         WT2022.Outpost.Outposts[_ScriptName].MaxHealth = math.ceil(Data.MaxHealth * 1.2);
                         WT2022.Outpost.Outposts[_ScriptName].Health = Data.MaxHealth;
                         SVLib.SetHPOfEntity(GetID(_ScriptName), 600);
@@ -352,7 +352,7 @@ function WT2022.Outpost:CreateDefender(_ScriptName, _OffsetX, _OffsetY)
     if not self.Outposts[_ScriptName] then
         return;
     end
-    local PlayerID = self.Outposts[_ScriptName].Deliverer;
+    local PlayerID = Logic.EntityGetPlayer(GetID(_ScriptName));
     local TeamID = self.Outposts[_ScriptName].OwningTeam;
     if TeamID == 0 then
         return;
@@ -798,24 +798,26 @@ end
 function Outpost_Internal_OnEntityHurt()
     local Attacker = Event.GetEntityID1();
     local Attacked = Event.GetEntityID2();
-    local AttackedName = Logic.GetEntityName(Attacked);
-    if WT2022.Outpost.Outposts[AttackedName] then
-        local AttackingPlayer = Logic.EntityGetPlayer(Attacker);
-        local OldPlayer = Logic.EntityGetPlayer(Attacked);
-        local Damage = Logic.GetEntityDamage(Attacker);
-        local Armor = 1/WT2022.Outpost.Outposts[AttackedName].ArmorFactor;
-        local RealHealth = Logic.GetEntityMaxHealth(Attacked);
-        local MaxHealth = WT2022.Outpost.Outposts[AttackedName].MaxHealth;
-        local MinHealth = math.ceil(MaxHealth * 0.25);
-        local FakeHealth = WT2022.Outpost.Outposts[AttackedName].Health;
-        FakeHealth = FakeHealth - (Damage * Armor);
-        WT2022.Outpost.Outposts[AttackedName].Health = math.max(MinHealth, FakeHealth);
-        local RelativeHealth = RealHealth * (FakeHealth/MaxHealth);
-        SVLib.SetHPOfEntity(Attacked, RelativeHealth);
+    if Attacker and Attacked then
+        local AttackedName = Logic.GetEntityName(Attacked);
+        if WT2022.Outpost.Outposts[AttackedName] then
+            local AttackingPlayer = Logic.EntityGetPlayer(Attacker);
+            local OldPlayer = Logic.EntityGetPlayer(Attacked);
+            local Damage = Logic.GetEntityDamage(Attacker);
+            local Armor = 1/WT2022.Outpost.Outposts[AttackedName].ArmorFactor;
+            local RealHealth = Logic.GetEntityMaxHealth(Attacked);
+            local MaxHealth = WT2022.Outpost.Outposts[AttackedName].MaxHealth;
+            local MinHealth = math.ceil(MaxHealth * 0.25);
+            local FakeHealth = WT2022.Outpost.Outposts[AttackedName].Health;
+            FakeHealth = FakeHealth - (Damage * Armor);
+            WT2022.Outpost.Outposts[AttackedName].Health = math.max(MinHealth, FakeHealth);
+            local RelativeHealth = RealHealth * (FakeHealth/MaxHealth);
+            SVLib.SetHPOfEntity(Attacked, math.ceil(RelativeHealth));
 
-        if WT2022.Outpost:CanBeClaimed(AttackedName, OldPlayer, AttackingPlayer) then
-            local TeamOfAttacker = WT2022.Outpost:GetTeamOfPlayer(AttackingPlayer);
-            WT2022.Outpost:ClaimOutpost(AttackedName, OldPlayer, AttackingPlayer, TeamOfAttacker);
+            if WT2022.Outpost:CanBeClaimed(AttackedName, OldPlayer, AttackingPlayer) then
+                local TeamOfAttacker = WT2022.Outpost:GetTeamOfPlayer(AttackingPlayer);
+                WT2022.Outpost:ClaimOutpost(AttackedName, OldPlayer, AttackingPlayer, TeamOfAttacker);
+            end
         end
     end
 end
