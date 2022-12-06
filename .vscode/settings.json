@@ -169,7 +169,8 @@
         "Sync",
         "GUIQuestTools",
         "AddPeriodicRain",
-        "StartSimpleJob"
+        "StartSimpleJob",
+        "GameCallback_OnTransactionComplete"
     ],
     "Lua.diagnostics.disable": [
         "deprecated",

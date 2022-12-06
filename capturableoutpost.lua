@@ -76,6 +76,16 @@ function WT2022.Outpost.Claim(_ScriptName, _NewPlayer)
     WT2022.Outpost:ClaimOutpost(_ScriptName, OldPlayer, _NewPlayer, TeamID);
 end
 
+--- Returns the resource type produced by the outpost.
+--- @param _ScriptName string Script name of outpost
+--- @return number ResourceType Type of produced Resource
+function WT2022.Outpost.GetResourceType(_ScriptName)
+    if WT2022.Outpost.Outposts[_ScriptName] then
+        return WT2022.Outpost.Outposts[_ScriptName].ResourceType;
+    end
+    return -1;
+end
+
 -- -------------------------------------------------------------------------- --
 
 function WT2022.Outpost:Setup(_T1P1, _T1P2, _DP1, _T2P1, _T2P2, _DP2)
@@ -126,8 +136,8 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
     self.SequenceID = self.SequenceID +1;
     self.Outposts[_ScriptName] = {
         Name = _DisplayName or ("Province " ..self.SequenceID),
-        Health = 3000,
-        MaxHealth = 3000,
+        Health = 3250,
+        MaxHealth = 3250,
         ArmorFactor = 4,
         DoorPos = _DoorPos,
         ResourceType = _ResourceType,
@@ -197,7 +207,7 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
                         WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 1;
-                        WT2022.Outpost.Outposts[_ScriptName].MaxHealth = math.ceil(Data.MaxHealth * 1.2);
+                        WT2022.Outpost.Outposts[_ScriptName].MaxHealth = math.ceil(Data.MaxHealth + 250);
                         WT2022.Outpost.Outposts[_ScriptName].Health = Data.MaxHealth;
                         SVLib.SetHPOfEntity(GetID(_ScriptName), 600);
                     end
@@ -207,17 +217,17 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
                         WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 1;
-                        WT2022.Outpost.Outposts[_ScriptName].MaxHealth = math.ceil(Data.MaxHealth * 1.2);
+                        WT2022.Outpost.Outposts[_ScriptName].MaxHealth = math.ceil(Data.MaxHealth + 250);
                         WT2022.Outpost.Outposts[_ScriptName].Health = Data.MaxHealth;
                         SVLib.SetHPOfEntity(GetID(_ScriptName), 600);
                     end
                 },
                 [3] = {
-                    Costs = {[ResourceType.Stone] = 650, [ResourceType.Clay] = 950},
+                    Costs = {[ResourceType.Stone] = 950, [ResourceType.Clay] = 1250},
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
-                        WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 1;
-                        WT2022.Outpost.Outposts[_ScriptName].MaxHealth = math.ceil(Data.MaxHealth * 1.2);
+                        WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 2;
+                        WT2022.Outpost.Outposts[_ScriptName].MaxHealth = math.ceil(Data.MaxHealth + 250);
                         WT2022.Outpost.Outposts[_ScriptName].Health = Data.MaxHealth;
                         SVLib.SetHPOfEntity(GetID(_ScriptName), 600);
                     end
@@ -344,7 +354,7 @@ function WT2022.Outpost:ClaimOutpost(_ScriptName, _OldPlayer, _NewPlayer, _TeamI
     self.Outposts[_ScriptName].Health = self.Outposts[_ScriptName].MaxHealth;
     self:CreateExplorerEntity(_ScriptName, NewPlayer);
     if GameCallback_User_OutpostClaimed then
-        GameCallback_User_OutpostClaimed(_ScriptName, _NewPlayer, _TeamID, NewPlayer);
+        GameCallback_User_OutpostClaimed(_ScriptName, _OldPlayer, _NewPlayer, NewPlayer);
     end
 end
 
@@ -353,7 +363,7 @@ function WT2022.Outpost:CreateDefender(_ScriptName, _OffsetX, _OffsetY)
         return;
     end
     local PlayerID = Logic.EntityGetPlayer(GetID(_ScriptName));
-    local TeamID = self.Outposts[_ScriptName].OwningTeam;
+    local TeamID = WT2022.Outpost:GetTeamOfPlayer(PlayerID);
     if TeamID == 0 then
         return;
     end
@@ -473,20 +483,32 @@ function WT2022.Outpost:OverwriteCommonCallbacks()
 	WT2022.Outpost.GameCallback_OnBuildingConstructionComplete = GameCallback_OnBuildingConstructionComplete;
 	GameCallback_OnBuildingConstructionComplete = function(_EntityID, _PlayerID)
 		WT2022.Outpost.GameCallback_OnBuildingConstructionComplete(_EntityID, _PlayerID);
-        WT2022.Outpost:DisplayChuirchMenu(_EntityID);
+        WT2022.Outpost:DisplayChuirchMenu(GUI.GetSelectedEntity());
 	end
 
 	WT2022.Outpost.GameCallback_OnBuildingUpgradeComplete = GameCallback_OnBuildingUpgradeComplete;
 	GameCallback_OnBuildingUpgradeComplete = function(_EntityIDOld, _EntityIDNew)
 		WT2022.Outpost.GameCallback_OnBuildingUpgradeComplete(_EntityIDOld, _EntityIDNew);
-        WT2022.Outpost:DisplayChuirchMenu(_EntityIDNew);
+        WT2022.Outpost:DisplayChuirchMenu(GUI.GetSelectedEntity());
 	end
 
 	WT2022.Outpost.GameCallback_OnTechnologyResearched = GameCallback_OnTechnologyResearched;
 	GameCallback_OnTechnologyResearched = function(_PlayerID, _Technology, _EntityID)
 		WT2022.Outpost.GameCallback_OnTechnologyResearched(_PlayerID, _Technology, _EntityID);
-        WT2022.Outpost:DisplayChuirchMenu(_EntityID);
+        WT2022.Outpost:DisplayChuirchMenu(GUI.GetSelectedEntity());
 	end
+
+    WT2022.Outpost.GameCallback_OnCannonConstructionComplete = GameCallback_OnCannonConstructionComplete;
+    GameCallback_OnCannonConstructionComplete = function(_BuildingID, _null)
+        WT2022.Outpost.GameCallback_OnCannonConstructionComplete(_BuildingID, _null);
+        WT2022.Outpost:DisplayChuirchMenu(GUI.GetSelectedEntity());
+    end
+
+    WT2022.Outpost.GameCallback_OnTransactionComplete = GameCallback_OnTransactionComplete;
+    GameCallback_OnCannonConstructionComplete = function(_BuildingID, _null)
+        WT2022.Outpost.GameCallback_OnTransactionComplete(_BuildingID, _null);
+        WT2022.Outpost:DisplayChuirchMenu(GUI.GetSelectedEntity());
+    end
 
 	WT2022.Outpost.Mission_OnSaveGameLoaded = Mission_OnSaveGameLoaded;
 	Mission_OnSaveGameLoaded = function()

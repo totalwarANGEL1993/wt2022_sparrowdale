@@ -121,6 +121,7 @@ function WT2022.Delivery:ConcludeDelivery(_Data)
             );
         end
     end
+    -- Main resource
     Logic.AddToPlayersGlobalResource(_Data.Receiver, _Data.ResourceType, _Data.Amount);
 end
 
@@ -180,7 +181,7 @@ function Delivery_Internal_OnEverySecond()
                 local Position = GetPosition(v.Destination);
                 Logic.MoveSettler(GetID(k), Position.X, Position.Y);
             end
-            if IsNear(k, v.Destination, 100) then
+            if IsNear(k, v.Destination, 300) then
                 WT2022.Delivery:ConcludeDelivery(v);
                 DestroyEntity(k);
             end

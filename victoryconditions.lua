@@ -10,6 +10,8 @@ WT2022 = WT2022 or {};
 
 WT2022.Victory = {
     Teams = {},
+    HeroTagList = {},
+    ResHeapList = {},
 
     StohlenResource = {
         VictoryThreshold = 10000,
@@ -17,7 +19,7 @@ WT2022.Victory = {
     ControlledOutposts = {
         Timer = -1,
         MaxAmount = 0,
-    }
+    },
 }
 
 --- Initalizes the victory conditions. Must be called once on game start.
@@ -39,10 +41,11 @@ function WT2022.Victory.RegisterTheft(_TeamID, _Amount)
 end
 
 --- Registers that a team has conquered an outpost.
---- @param _TeamID     number ID of team
+--- @param _PlayerID   number ID of team
 --- @param _ScriptName string Scriptname of outpost
-function WT2022.Victory.RegisterClaim(_TeamID, _ScriptName)
-    WT2022.Victory:SaveClaimedOutpost(_ScriptName, _TeamID);
+function WT2022.Victory.RegisterClaim(_PlayerID, _ScriptName)
+    local TeamID = WT2022.Victory:GetTeamOfPlayer(_PlayerID);
+    WT2022.Victory:SaveClaimedOutpost(_ScriptName, TeamID);
 end
 
 --- Changes the total amount of outposts to be claimed.
@@ -87,6 +90,11 @@ function WT2022.Victory:Setup(_T1P1, _T1P2, _DP1, _T2P1, _T2P2, _DP2)
     Logic.SetShareExplorationWithPlayerFlag(_T2P1, _T1P1, 0);
     Logic.SetShareExplorationWithPlayerFlag(_T2P2, _T1P2, 0);
 
+    for i= 1,8 do
+        self.HeroTagList[i] = {};
+        self.ResHeapList[i] = {};
+    end
+
     self.StohlenResource[1] = 0;
     self.StohlenResource[2] = 0;
 
@@ -102,6 +110,26 @@ function WT2022.Victory:Setup(_T1P1, _T1P2, _DP1, _T2P1, _T2P2, _DP2)
             1
         );
         self.ControllerJobID = JobID;
+    end
+    -- Hero Hurt Job
+    if not self.HeroHurtTriggerJobID then
+        local JobID = Trigger.RequestTrigger(
+            Events.LOGIC_EVENT_ENTITY_HURT_ENTITY,
+            "",
+            "Victory_Internal_OnEntityHurt",
+            1
+        );
+        self.HeroHurtTriggerJobID = JobID;
+    end
+    -- Hero Placer Job
+    if not self.HeroRespawnJobID then
+        local JobID = Trigger.RequestTrigger(
+            Events.LOGIC_EVENT_EVERY_TURN,
+            "",
+            "Victory_Internal_OnEveryTurn",
+            1
+        );
+        self.HeroRespawnJobID = JobID;
     end
     self:OverwriteTechraceInterface();
 end
@@ -236,8 +264,8 @@ function WT2022.Victory:DisplayFavoredTeam()
     local ResourceMax = self.StohlenResource.VictoryThreshold;
 
     self:HideAllPointRatios();
-    self:DisplayPointRation(1, "Eroberte Provinzen", Provinces1, Provinces2, OutpostMax);
-    self:DisplayPointRation(2, "Gestohlene Rohstoffe", Resources1, Resources2, ResourceMax);
+    self:DisplayPointRatio(1, "Eroberte Provinzen", Provinces1, Provinces2, OutpostMax);
+    self:DisplayPointRatio(2, "Gestohlene Rohstoffe", Resources1, Resources2, ResourceMax);
 end
 
 function WT2022.Victory:OverwriteTechraceInterface()
@@ -264,17 +292,17 @@ function WT2022.Victory:HideAllPointRatios()
     end
 end
 
-function WT2022.Victory:DisplayPointRation(_Index, _Name, _Value1, _Value2, _Max)
+function WT2022.Victory:DisplayPointRatio(_Index, _Name, _Value1, _Value2, _Max)
     local Screen = {GUI.GetScreenSize()}
-    local XRation = (1024/Screen[1]);
-    local YRation = (768/Screen[2]);
-    local ScreenX = Screen[1] * XRation;
-    local ScreenY = Screen[2] * YRation;
-    local W = 800 * XRation;
-    local H = 35 * YRation;
-    local H1 = 15 * YRation;
+    local XRatio = (1024/Screen[1]);
+    local YRatio = (768/Screen[2]);
+    local ScreenX = Screen[1] * XRatio;
+    local ScreenY = Screen[2] * YRatio;
+    local W = 500 * XRatio;
+    local H = 25 * YRatio;
+    local H1 = 10 * YRatio;
     local X = (ScreenX/2) - (W/2);
-    local Y = 85 + ((40*YRation) * (_Index-1));
+    local Y = 95 + ((30*YRatio) * (_Index-1));
     local X1 = 0;
     local W1 = W * (_Value1/_Max);
     local W2 = W * (_Value2/_Max);
@@ -298,7 +326,125 @@ function WT2022.Victory:DisplayPointRation(_Index, _Name, _Value1, _Value2, _Max
     XGUIEng.SetText("VCMP_Team" .._Index.. "Name", "@center " .._Name);
 end
 
+function WT2022.Victory:GetTeamOfPlayer(_PlayerID)
+    for i= 1, 2 do
+        if self.Teams[i][1] == _PlayerID or self.Teams[i][2] == _PlayerID then
+            return i;
+        end
+    end
+    return 0;
+end
+
 -- -------------------------------------------------------------------------- --
+
+function WT2022.Victory:CreateCompensationHeap(_ScriptName, _OldPlayer, _NewPlayer)
+    -- Only if just the humans are involved
+    if _OldPlayer > 4 or _NewPlayer > 4 then
+        return;
+    end
+    local OldTeam = self:GetTeamOfPlayer(_OldPlayer);
+    local NewTeam = self:GetTeamOfPlayer(_NewPlayer);
+    -- Only if new owner is other team
+    if OldTeam == NewTeam then
+        return;
+    end
+
+    -- Create heap
+    local HeapPos = self:GetCompensationResourceHeapName(_ScriptName, _OldPlayer);
+    local ID = GetID(HeapPos.. "Heap");
+    if ID == 0 then
+        local x,y,z = Logic.EntityGetPos(GetID(HeapPos));
+        local EntityType = self:GetCompensationResourceHeapType(_ScriptName);
+        ID = Logic.CreateEntity(EntityType, x, y, 0, 0);
+        Logic.SetEntityName(ID, HeapPos.. "Heap");
+    end
+    Logic.SetResourceDoodadGoodAmount(ID, 750);
+end
+
+function WT2022.Victory:GetCompensationResourceHeapType(_ScriptName)
+    local Resource = WT2022.Outpost.GetResourceType(_ScriptName);
+    if Resource == -1 then
+        return;
+    end
+    local EntityType = Entities.XD_Clay1;
+    if Resource == ResourceType.IronRaw then
+        EntityType = Entities.XD_Iron1;
+    end
+    if Resource == ResourceType.SulfurRaw then
+        EntityType = Entities.XD_Sulfur1;
+    end
+    if Resource == ResourceType.StoneRaw then
+        EntityType = Entities.XD_Stone1;
+    end
+    return EntityType;
+end
+
+function WT2022.Victory:GetCompensationResourceHeapName(_ScriptName, _OldPlayer)
+    local Resource = WT2022.Outpost.GetResourceType(_ScriptName);
+    if Resource == -1 then
+        return;
+    end
+    local ScriptName = "P" .._OldPlayer.. "_CompClay";
+    if Resource == ResourceType.IronRaw then
+        ScriptName = "P" .._OldPlayer.. "_CompIron";
+    end
+    if Resource == ResourceType.SulfurRaw then
+        ScriptName = "P" .._OldPlayer.. "_CompSulfur";
+    end
+    if Resource == ResourceType.StoneRaw then
+        ScriptName = "P" .._OldPlayer.. "_CompStone";
+    end
+    return ScriptName;
+end
+
+-- -------------------------------------------------------------------------- --
+
+function WT2022.Victory:SaveHeroAttacked(_AttackerID, _AttackedID)
+    local PlayerID = Logic.EntityGetPlayer(_AttackedID);
+    self.HeroTagList[PlayerID][_AttackedID] = 15;
+end
+
+function WT2022.Victory:ControlHeroAttacked()
+    for i= 1, 8 do
+        for k, v in pairs(self.HeroTagList[i]) do
+            if not IsExisting(k) then
+                self.HeroTagList[i][k] = nil;
+            else
+                self.HeroTagList[i][k] = v - 1;
+                if v <= 0 then
+                    self.HeroTagList[i][k] = nil;
+                else
+                    if Logic.GetEntityHealth(k) == 0 then
+                        local x,y,z = Logic.EntityGetPos(k);
+                        local Color = " @color:"..table.concat({GUI.GetPlayerColor(i)}, ",");
+                        local TypeName = Logic.GetEntityTypeName(Logic.GetEntityType(k));
+                        local Name = XGUIEng.GetStringTableText("Names/" ..TypeName);
+                        Message(Color.. " " ..Name.. " muss sich in die Burg zurückziehen!");
+                        Logic.CreateEffect(GGL_Effects.FXDieHero, x, y, i);
+                        local ID = SetPosition(k, GetPosition("HQ" ..i.. "_DoorPos"));
+                        Logic.HurtEntity(ID, Logic.GetEntityHealth(ID));
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- -------------------------------------------------------------------------- --
+
+function Victory_Internal_OnEntityHurt()
+    local Attacker = Event.GetEntityID1();
+    local Attacked = Event.GetEntityID2();
+    if Attacker and Attacked then
+        if Logic.IsHero(Attacked) == 1 then
+            WT2022.Victory:SaveHeroAttacked(Attacker, Attacked);
+        end
+    end
+end
+
+function Victory_Internal_OnEveryTurn()
+    WT2022.Victory:ControlHeroAttacked();
+end
 
 function Victory_Internal_OnEverySecond()
     local WinningTeam = 0;
@@ -326,4 +472,3 @@ function Victory_Internal_OnEverySecond()
         return true;
     end
 end
-
