@@ -132,6 +132,7 @@ function WT2022.Victory:Setup(_T1P1, _T1P2, _DP1, _T2P1, _T2P2, _DP2)
         self.HeroRespawnJobID = JobID;
     end
     self:OverwriteTechraceInterface();
+    self:OverwriteSelfDestruct();
 end
 
 function WT2022.Victory:Victory(_WinningTeam)
@@ -333,6 +334,19 @@ function WT2022.Victory:GetTeamOfPlayer(_PlayerID)
         end
     end
     return 0;
+end
+
+-- -------------------------------------------------------------------------- --
+
+function WT2022.Victory:OverwriteSelfDestruct()
+    if Network_Handler_Diplomacy_Self_Destruct_Helper then
+        Network_Handler_Diplomacy_Self_Destruct_Helper_Orig_WT2022 = Network_Handler_Diplomacy_Self_Destruct_Helper;
+        Network_Handler_Diplomacy_Self_Destruct_Helper = function(pid, type)
+            if type ~= Entities.CB_Bastille1 then
+                Network_Handler_Diplomacy_Self_Destruct_Helper_Orig_WT2022(pid, type)
+            end
+        end
+    end
 end
 
 -- -------------------------------------------------------------------------- --

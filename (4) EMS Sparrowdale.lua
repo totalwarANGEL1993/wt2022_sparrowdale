@@ -34,6 +34,12 @@ EMS_CustomMapConfig = {
         Display.SetPlayerColorMapping(7, 14);
         Display.SetPlayerColorMapping(8, 14);
 
+        for i= 1, 4 do
+            VictoryConditionQuestDomincance(i);
+            VictoryConditionQuestTactical(i);
+            VictoryConditionQuestThievery(i);
+        end
+
         -- Deliver resource to the players
         function GameCallback_User_OutpostProduceResource(_ScriptName, _SpawnPoint, _OwningTeam, _ResourceType, _Amount)
             local Sender = WT2022.Outpost.Teams[_OwningTeam].Deliverer;
@@ -110,12 +116,6 @@ EMS_CustomMapConfig = {
         WT2022.Victory.Init(Teams[1][1], Teams[1][2], 5, Teams[2][1], Teams[2][2], 6);
         WT2022.Victory:SetMaximumOutpostAmount(8);
         WT2022.Victory:SetResourceAmount(5000);
-
-        for i= 1, 4 do
-            VictoryConditionQuestDomincance(i);
-            VictoryConditionQuestTactical(i);
-            VictoryConditionQuestThievery(i);
-        end
     end,
 
     -- ********************************************************************************************
@@ -369,11 +369,11 @@ function RemoveBlockRocksToMakePlayersAccessEachother()
 end
 
 function OnOutpostUpgradeStarted(_ScriptName, _UpgradeType, _NextUpgradeLevel)
-
+    -- TODO (will propably never be done...)
 end
 
 function OnOutpostUpgradeFinished(_ScriptName, _UpgradeType, _NewUpgradeLevel)
-
+    -- TODO (will propably never be done...)
 end
 
 function VictoryConditionQuestDomincance(_PlayerID)
@@ -702,12 +702,13 @@ function WT2022.Outpost:InitiateUpgrade(_ScriptName, _Type, _Duration)
         end
         -- Logic
         local Costs = self:GetUpgradeCosts(_ScriptName, _Type);
+        local PlayerID = Logic.EntityGetPlayer(GetID(_ScriptName));
         self.Outposts[_ScriptName].IsUpgrading = true;
         self.Outposts[_ScriptName].UpgradeType = _Type;
         self.Outposts[_ScriptName].UpgradeDuration = _Duration;
         self.Outposts[_ScriptName].UpgradeStarted = Logic.GetTime();
-        self:DisplayUpgradeStartMessage(_ScriptName, GetPlayer(_ScriptName));
-        RemoveResourcesFromPlayer(GetPlayer(_ScriptName), Costs);
+        self:DisplayUpgradeStartMessage(_ScriptName, PlayerID);
+        RemoveResourcesFromPlayer(PlayerID, Costs);
         GameCallback_GUI_SelectionChanged();
         if GameCallback_User_OutpostUpgradeStarted then
             local Level = self.Outposts[_ScriptName].Upgrades[_Type].Level +1;
@@ -1621,6 +1622,7 @@ function WT2022.Victory:Setup(_T1P1, _T1P2, _DP1, _T2P1, _T2P2, _DP2)
         self.HeroRespawnJobID = JobID;
     end
     self:OverwriteTechraceInterface();
+    self:OverwriteSelfDestruct();
 end
 
 function WT2022.Victory:Victory(_WinningTeam)
@@ -1822,6 +1824,19 @@ function WT2022.Victory:GetTeamOfPlayer(_PlayerID)
         end
     end
     return 0;
+end
+
+-- -------------------------------------------------------------------------- --
+
+function WT2022.Victory:OverwriteSelfDestruct()
+    if Network_Handler_Diplomacy_Self_Destruct_Helper then
+        Network_Handler_Diplomacy_Self_Destruct_Helper_Orig_WT2022 = Network_Handler_Diplomacy_Self_Destruct_Helper;
+        Network_Handler_Diplomacy_Self_Destruct_Helper = function(pid, type)
+            if type ~= Entities.CB_Bastille1 then
+                Network_Handler_Diplomacy_Self_Destruct_Helper_Orig_WT2022(pid, type)
+            end
+        end
+    end
 end
 
 -- -------------------------------------------------------------------------- --

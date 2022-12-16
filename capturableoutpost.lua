@@ -289,12 +289,13 @@ function WT2022.Outpost:InitiateUpgrade(_ScriptName, _Type, _Duration)
         end
         -- Logic
         local Costs = self:GetUpgradeCosts(_ScriptName, _Type);
+        local PlayerID = Logic.EntityGetPlayer(GetID(_ScriptName));
         self.Outposts[_ScriptName].IsUpgrading = true;
         self.Outposts[_ScriptName].UpgradeType = _Type;
         self.Outposts[_ScriptName].UpgradeDuration = _Duration;
         self.Outposts[_ScriptName].UpgradeStarted = Logic.GetTime();
-        self:DisplayUpgradeStartMessage(_ScriptName, GetPlayer(_ScriptName));
-        RemoveResourcesFromPlayer(GetPlayer(_ScriptName), Costs);
+        self:DisplayUpgradeStartMessage(_ScriptName, PlayerID);
+        RemoveResourcesFromPlayer(PlayerID, Costs);
         GameCallback_GUI_SelectionChanged();
         if GameCallback_User_OutpostUpgradeStarted then
             local Level = self.Outposts[_ScriptName].Upgrades[_Type].Level +1;
@@ -310,7 +311,8 @@ function WT2022.Outpost:ConcludeUpgrade(_ScriptName, _Type, _Level)
         self.Outposts[_ScriptName].UpgradeTrestle = nil;
     end
     -- Logic
-    self:DisplayUpgradeEndMessage(_ScriptName, GetPlayer(_ScriptName));
+    local PlayerID = Logic.EntityGetPlayer(GetID(_ScriptName));
+    self:DisplayUpgradeEndMessage(_ScriptName, PlayerID);
     self:DisplayChuirchMenu(GetID(_ScriptName));
     self:UpgradeRate(_ScriptName, _Type);
     self.Outposts[_ScriptName].IsUpgrading = false;
