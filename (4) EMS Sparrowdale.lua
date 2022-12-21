@@ -1832,7 +1832,7 @@ function WT2022.Victory:OverwriteSelfDestruct()
     if Network_Handler_Diplomacy_Self_Destruct_Helper then
         Network_Handler_Diplomacy_Self_Destruct_Helper_Orig_WT2022 = Network_Handler_Diplomacy_Self_Destruct_Helper;
         Network_Handler_Diplomacy_Self_Destruct_Helper = function(pid, type)
-            if type ~= Entities.CB_Bastille1 then
+            if type ~= Entities.CB_Bastille1 and type ~= Entities.CB_Evil_Tower1 then
                 Network_Handler_Diplomacy_Self_Destruct_Helper_Orig_WT2022(pid, type)
             end
         end
@@ -1862,7 +1862,7 @@ function WT2022.Victory:CreateCompensationHeap(_ScriptName, _OldPlayer, _NewPlay
         ID = Logic.CreateEntity(EntityType, x, y, 0, 0);
         Logic.SetEntityName(ID, HeapPos.. "Heap");
     end
-    Logic.SetResourceDoodadGoodAmount(ID, 750);
+    Logic.SetResourceDoodadGoodAmount(ID, 1500);
 end
 
 function WT2022.Victory:GetCompensationResourceHeapType(_ScriptName)
