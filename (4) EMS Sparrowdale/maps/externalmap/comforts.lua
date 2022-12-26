@@ -147,6 +147,50 @@ function DestroyWoodPile( _piletable, _index )
     table.remove( gvWoodPiles, _index )
 end
 
+function DestroyArmy(_player,_armyId)
+    local leaders = GetAllLeader(_player)
+    for i=1,table.getn(leaders) do
+        if AI.Entity_GetConnectedArmy(leaders[i]) == _armyId then
+            Logic.DestroyGroupByLeader(leaders[i])
+        end
+    end
+end
+
+function GetAllLeader(_player)
+    local leaderIds = {}
+    local cannonIds = {}
+    local numberOfLeaders = Logic.GetNumberOfLeader(_player)
+    local cannonCount = 0
+    local prevLeaderId = 0
+    local existing = {}
+    for i=1,numberOfLeaders do
+        local nextLeaderId = Logic.GetNextLeader( _player, prevLeaderId )
+        if existing[nextLeaderId] then
+            cannonCount = cannonCount + 1
+        else
+            existing[nextLeaderId] = true;
+            table.insert(leaderIds,nextLeaderId)
+        end
+        prevLeaderId = nextLeaderId
+    end
+    if cannonCount > 0 then
+        local tempCannonIds = {}
+        for i=1,4 do
+            local counter = 0
+            counter = Logic.GetNumberOfEntitiesOfTypeOfPlayer(_player, Entities["PV_Cannon"..i])
+            if counter > 0 then
+                tempCannonIds = {Logic.GetPlayerEntities(_player, Entities["PV_Cannon"..i], counter)}
+                table.remove(tempCannonIds,1)
+                for j=1,table.getn(tempCannonIds) do
+                    table.insert(leaderIds,tempCannonIds[j])
+                    table.insert(cannonIds,tempCannonIds[j])
+                end
+            end
+        end
+    end
+    return leaderIds, cannonIds
+end
+
 ---
 --- Scripting Values
 --- 

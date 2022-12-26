@@ -87,10 +87,10 @@ function WT2022.Delivery:CreateCart(_SenderID, _ReceiverID, _Position, _Resource
     end
     self.SequenceID = self.SequenceID +1;
     local ID = AI.Entity_CreateFormation(_SenderID, Entities.PU_Serf, nil, 0, _Position.X, _Position.Y, nil, nil, 0, 0);
+    Logic.SetEntityName(ID, "WT2022_Delivery" ..self.SequenceID);
     SVLib.SetInvisibility(ID, true);
-    Logic.SetEntityName(ID, "WT2022.Delivery" ..self.SequenceID);
     MakeInvulnerable(ID);
-    self.Carts["WT2022.Delivery" ..self.SequenceID] = {
+    self.Carts["WT2022_Delivery" ..self.SequenceID] = {
         OriginalReceiver = _ReceiverID,
         Receiver = _ReceiverID,
         Destination = "HQ" .._ReceiverID.. "_DoorPos",
@@ -176,6 +176,7 @@ function Delivery_Internal_OnEverySecond()
         else
             if Logic.GetEntityType(GetID(k)) ~= Entities.PU_Travelling_Salesman then
                 ReplaceEntity(k, Entities.PU_Travelling_Salesman);
+                MakeInvulnerable(k);
             end
             if Logic.IsEntityMoving(GetID(k)) == false then
                 local Position = GetPosition(v.Destination);

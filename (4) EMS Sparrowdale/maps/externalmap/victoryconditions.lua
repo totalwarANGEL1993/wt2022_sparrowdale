@@ -134,9 +134,9 @@ function WT2022.Victory:Setup(_T1P1, _T1P2, _DP1, _T2P1, _T2P2, _DP2)
     -- Controller player defeat
     if not self.PlayerDefeatJobID then
         local JobID = Trigger.RequestTrigger(
-            Events.LOGIC_EVENT_ENTITY_DESTROYED,
+            Events.LOGIC_EVENT_EVERY_SECOND,
             "",
-            "Victory_Internal_OnEntityDestroyed",
+            "Victory_Internal_OnPlayerDestroyed",
             1
         );
         self.PlayerDefeatJobID = JobID;
@@ -488,7 +488,7 @@ function WT2022.Victory:ControlHeroAttacked()
                         local Color = " @color:"..table.concat({GUI.GetPlayerColor(i)}, ",");
                         local TypeName = Logic.GetEntityTypeName(Logic.GetEntityType(k));
                         local Name = XGUIEng.GetStringTableText("Names/" ..TypeName);
-                        Message(Color.. " " ..Name.. " muss sich in die Burg zurückziehen!");
+                        Message(Color.. " " ..Name.. " @color:255,255,255 muss sich in die Burg zurückziehen!");
                         Logic.CreateEffect(GGL_Effects.FXDieHero, x, y, i);
                         local ID = SetPosition(k, GetPosition("HQ" ..i.. "_DoorPos"));
                         Logic.HurtEntity(ID, Logic.GetEntityHealth(ID));
@@ -511,11 +511,19 @@ function Victory_Internal_OnEntityHurt()
     end
 end
 
-function Victory_Internal_OnEntityDestroyed()
-    local EntityID = Event.GetEntityID();
-    local PlayerID = Logic.EntityGetPlayer(EntityID);
-    if Logic.IsEntityInCategory(EntityID, EntityCategories.Headquarters) == 1 then
-        WT2022.Victory:ForcedSelfDesctruct(PlayerID);
+function Victory_Internal_OnPlayerDestroyed()
+    for i= 1, 4 do
+        if Logic.PlayerGetGameState(i) == 1 then
+            local HQ1 = Logic.GetNumberOfEntitiesOfTypeOfPlayer(i, Entities.PB_Headquarters1);
+            local HQ2 = Logic.GetNumberOfEntitiesOfTypeOfPlayer(i, Entities.PB_Headquarters2);
+            local HQ3 = Logic.GetNumberOfEntitiesOfTypeOfPlayer(i, Entities.PB_Headquarters3);
+            if HQ1 + HQ2 + HQ3 == 0 then
+                WT2022.Victory:ForcedSelfDesctruct(i);
+                if GameCallback_User_PlayerDefeated then
+                    GameCallback_User_PlayerDefeated(i, WT2022.Victory:GetTeamOfPlayer(i));
+                end
+            end
+        end
     end
 end
 

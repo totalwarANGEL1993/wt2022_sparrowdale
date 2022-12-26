@@ -170,7 +170,12 @@
         "GUIQuestTools",
         "AddPeriodicRain",
         "StartSimpleJob",
-        "GameCallback_OnTransactionComplete"
+        "GameCallback_OnTransactionComplete",
+        "SetupArmy",
+        "SetupAITroopSpawnGenerator",
+        "Defend",
+        "VERYHIGH_EXPERIENCE",
+        "EnlargeArmy"
     ],
     "Lua.diagnostics.disable": [
         "deprecated",
