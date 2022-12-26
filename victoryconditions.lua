@@ -131,6 +131,16 @@ function WT2022.Victory:Setup(_T1P1, _T1P2, _DP1, _T2P1, _T2P2, _DP2)
         );
         self.HeroRespawnJobID = JobID;
     end
+    -- Controller player defeat
+    if not self.PlayerDefeatJobID then
+        local JobID = Trigger.RequestTrigger(
+            Events.LOGIC_EVENT_ENTITY_DESTROYED,
+            "",
+            "Victory_Internal_OnEntityDestroyed",
+            1
+        );
+        self.PlayerDefeatJobID = JobID;
+    end
     self:OverwriteTechraceInterface();
     self:OverwriteSelfDestruct();
 end
@@ -342,11 +352,56 @@ function WT2022.Victory:OverwriteSelfDestruct()
     if Network_Handler_Diplomacy_Self_Destruct_Helper then
         Network_Handler_Diplomacy_Self_Destruct_Helper_Orig_WT2022 = Network_Handler_Diplomacy_Self_Destruct_Helper;
         Network_Handler_Diplomacy_Self_Destruct_Helper = function(pid, type)
-            if type ~= Entities.CB_Bastille1 and type ~= Entities.CB_Evil_Tower1 then
+            if  type ~= Entities.CB_Bastille1
+            and type ~= Entities.CB_Evil_Tower1_ArrowLauncher
+            and type ~= Entities.CB_Evil_Tower1 then
                 Network_Handler_Diplomacy_Self_Destruct_Helper_Orig_WT2022(pid, type)
             end
         end
     end
+end
+
+function WT2022.Victory:ForcedSelfDesctruct(_PlayerID)
+    Logic.PlayerSetGameStateToLost(_PlayerID);
+    if not Network_Handler_Diplomacy_Self_Destruct_Helper then
+        return;
+    end
+
+    local destroy_later = {
+        [Entities.PB_Headquarters1] = true;
+        [Entities.PB_Headquarters2] = true;
+        [Entities.PB_Headquarters3] = true;
+        [Entities.PB_Market1] = true;
+        [Entities.PB_Market2] = true;
+
+        [Entities.PB_ClayMine1] = true;
+        [Entities.PB_ClayMine2] = true;
+        [Entities.PB_ClayMine3] = true;
+
+        [Entities.PB_IronMine1] = true;
+        [Entities.PB_IronMine2] = true;
+        [Entities.PB_IronMine3] = true;
+
+        [Entities.PB_StoneMine1] = true;
+        [Entities.PB_StoneMine2] = true;
+        [Entities.PB_StoneMine3] = true;
+
+        [Entities.PB_SulfurMine1] = true;
+        [Entities.PB_SulfurMine2] = true;
+        [Entities.PB_SulfurMine3] = true;
+
+        [Entities.PB_Outpost1] = true;
+        [Entities.PB_Outpost2] = true;
+        [Entities.PB_Outpost3] = true;
+    };
+    for k,v in pairs(Entities) do
+        if not destroy_later[v] then
+            Network_Handler_Diplomacy_Self_Destruct_Helper(_PlayerID, v);
+        end;
+    end;
+    for k,v in pairs(destroy_later) do
+        Network_Handler_Diplomacy_Self_Destruct_Helper(_PlayerID, k);
+    end;
 end
 
 -- -------------------------------------------------------------------------- --
@@ -453,6 +508,14 @@ function Victory_Internal_OnEntityHurt()
         if Logic.IsHero(Attacked) == 1 then
             WT2022.Victory:SaveHeroAttacked(Attacker, Attacked);
         end
+    end
+end
+
+function Victory_Internal_OnEntityDestroyed()
+    local EntityID = Event.GetEntityID();
+    local PlayerID = Logic.EntityGetPlayer(EntityID);
+    if Logic.IsEntityInCategory(EntityID, EntityCategories.Headquarters) == 1 then
+        WT2022.Victory:ForcedSelfDesctruct(PlayerID);
     end
 end
 

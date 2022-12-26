@@ -87,6 +87,10 @@ EMS_CustomMapConfig = {
     -- * Called at the end of the 10 seconds delay, after the host chose the rules and started
     -- ********************************************************************************************
     Callback_OnGameStart = function()
+        -- Can not make snow during peacetime
+        for i= 1, 4 do
+            ForbidTechnology(Technologies.T_MakeSnow, i);
+        end
     end,
 
     -- ********************************************************************************************
@@ -96,7 +100,17 @@ EMS_CustomMapConfig = {
     Callback_OnPeacetimeEnded = function()
         RemoveBlockRocksToMakePlayersAccessEachother();
         RemoveBlockRocksToMakeOutpostsAccessable();
-        StartRain(30);
+        -- Change weather for blocking reasons
+        if Logic.GetWeatherState() == 1 then
+            StartRain(30);
+        else
+            StartSummer(30);
+        end
+
+        -- Allow make snow
+        for i= 1, 4 do
+            AllowTechnology(Technologies.T_MakeSnow, i);
+        end
 
         -- Get teams
         local Teams = {[1] = {1, 2}, [2] = {3, 4}};
@@ -122,7 +136,7 @@ EMS_CustomMapConfig = {
     -- * Peacetime
     -- * Number of minutes the players will be unable to attack each other
     -- ********************************************************************************************
-    Peacetime = 20,
+    Peacetime = 30,
 
     -- ********************************************************************************************
     -- * GameMode
@@ -167,12 +181,12 @@ EMS_CustomMapConfig = {
         -- * Normal default: 1k, 1.8k, 1.5k, 0.8k, 50, 50
         Normal = {
             [1] = {
-                1000,
-                1800,
+                1200,
+                2000,
                 1500,
-                800,
-                50,
-                50,
+                1200,
+                150,
+                150,
             },
         },
         -- * FastGame default: 2 x Normal Ressources
@@ -262,7 +276,7 @@ EMS_CustomMapConfig = {
     -- * 1 = Watchtowers
     -- * 2 = Balistatowers
     -- * 3 = Cannontowers
-    TowerLevel = 0, -- 0-3
+    TowerLevel = 1, -- 0-3
 
     -- * TowerLimit
     -- * 0  = no tower limit
@@ -381,20 +395,24 @@ function VictoryConditionQuestDomincance(_PlayerID)
     local Text  = "Das Team dem es gelingt, das gegnerische Team zu "..
                   "vernichten, hat gewonnen. @cr @cr Hinweise: @cr @cr "..
                   "1) Ob schnelle Siege wie z.B. durch Rush möglich sind "..
-                  "oder nicht, hängt von den EMS-Einstellungen ab.";
+                  "oder nicht, hängt von den EMS-Einstellungen ab. @cr "..
+                  "2) Gebäude in der Basis können nicht zerstört werden, "..
+                  "solange noch Außenposten kontrolliert werden.";
     Logic.AddQuest(_PlayerID, 1, MAINQUEST_OPEN, Title, Text, 1);
 end
 
 function VictoryConditionQuestTactical(_PlayerID)
-    local Title = "Siegbedingung: MONOPOL";
+    local Title = "Siegbedingung: VORHERRSCHAFT";
     local Text  = "Das Team dem es gelingt, alle Außenposten zu erobern "..
                   "und 5 Minuten zu halten, hat gewonnen."..
                   " @cr @cr Hinweise: @cr @cr "..
                   "1) Außenposten werden beansprucht, in dem sie zu einem "..
                   " gewissen Grad beschädigt werden. @cr "..
-                  "2) Außenposten produzieren veredelbare Rohstoffe und"..
+                  "2) Gebäude in der Basis können nicht zerstört werden, "..
+                  "solange noch Außenposten kontrolliert werden. @cr "..
+                  "3) Außenposten produzieren veredelbare Rohstoffe und"..
                   " können durch Upgrades verbessert werden. @cr "..
-                  "3) Eine Lieferung umfasst 250 Rohstoffe (oder 500 wenn "..
+                  "4) Eine Lieferung umfasst 250 Rohstoffe (oder 500 wenn "..
                   "der Teampartner bereits verloren hat).";
     Logic.AddQuest(_PlayerID, 2, MAINQUEST_OPEN, Title, Text, 1);
 end
@@ -1229,12 +1247,38 @@ end
 
 -- -------------------------------------------------------------------------- --
 
+function WT2022.Outpost:GuardPlayerEntities(_AttackedID)
+    if not IsExisting(_AttackedID) or Logic.GetEntityHealth(_AttackedID) == 0 then
+        return;
+    end
+    local PlayerID = Logic.EntityGetPlayer(_AttackedID);
+    local BaseCenter = GetID("P" ..PlayerID.."_BaseCenter");
+    if Logic.GetNumberOfEntitiesOfTypeOfPlayer(PlayerID, Entities.CB_Bastille1) > 0 then
+        if Logic.CheckEntitiesDistance(_AttackedID, BaseCenter, 12000) == 1 then
+            MakeInvulnerable(_AttackedID)
+        else
+            MakeVulnerable(_AttackedID);
+            if EMS.PlayerList[PlayerID] then
+                EMS.RF.HQRP.UpdateInvulnerabilityStatus(PlayerID);
+            end
+        end
+    else
+        MakeVulnerable(_AttackedID);
+        if EMS.PlayerList[PlayerID] then
+            EMS.RF.HQRP.UpdateInvulnerabilityStatus(PlayerID);
+        end
+    end
+end
+
+-- -------------------------------------------------------------------------- --
+
 -- Outpost is captured when damaged enough and no allies remain.
 -- (Outpost can not be destroyed)
 function Outpost_Internal_OnEntityHurt()
     local Attacker = Event.GetEntityID1();
     local Attacked = Event.GetEntityID2();
     if Attacker and Attacked then
+        WT2022.Outpost:GuardPlayerEntities(Attacked);
         local AttackedName = Logic.GetEntityName(Attacked);
         if WT2022.Outpost.Outposts[AttackedName] then
             local AttackingPlayer = Logic.EntityGetPlayer(Attacker);
@@ -1621,6 +1665,16 @@ function WT2022.Victory:Setup(_T1P1, _T1P2, _DP1, _T2P1, _T2P2, _DP2)
         );
         self.HeroRespawnJobID = JobID;
     end
+    -- Controller player defeat
+    if not self.PlayerDefeatJobID then
+        local JobID = Trigger.RequestTrigger(
+            Events.LOGIC_EVENT_ENTITY_DESTROYED,
+            "",
+            "Victory_Internal_OnEntityDestroyed",
+            1
+        );
+        self.PlayerDefeatJobID = JobID;
+    end
     self:OverwriteTechraceInterface();
     self:OverwriteSelfDestruct();
 end
@@ -1832,11 +1886,56 @@ function WT2022.Victory:OverwriteSelfDestruct()
     if Network_Handler_Diplomacy_Self_Destruct_Helper then
         Network_Handler_Diplomacy_Self_Destruct_Helper_Orig_WT2022 = Network_Handler_Diplomacy_Self_Destruct_Helper;
         Network_Handler_Diplomacy_Self_Destruct_Helper = function(pid, type)
-            if type ~= Entities.CB_Bastille1 and type ~= Entities.CB_Evil_Tower1 then
+            if  type ~= Entities.CB_Bastille1
+            and type ~= Entities.CB_Evil_Tower1_ArrowLauncher
+            and type ~= Entities.CB_Evil_Tower1 then
                 Network_Handler_Diplomacy_Self_Destruct_Helper_Orig_WT2022(pid, type)
             end
         end
     end
+end
+
+function WT2022.Victory:ForcedSelfDesctruct(_PlayerID)
+    Logic.PlayerSetGameStateToLost(_PlayerID);
+    if not Network_Handler_Diplomacy_Self_Destruct_Helper then
+        return;
+    end
+
+    local destroy_later = {
+        [Entities.PB_Headquarters1] = true;
+        [Entities.PB_Headquarters2] = true;
+        [Entities.PB_Headquarters3] = true;
+        [Entities.PB_Market1] = true;
+        [Entities.PB_Market2] = true;
+
+        [Entities.PB_ClayMine1] = true;
+        [Entities.PB_ClayMine2] = true;
+        [Entities.PB_ClayMine3] = true;
+
+        [Entities.PB_IronMine1] = true;
+        [Entities.PB_IronMine2] = true;
+        [Entities.PB_IronMine3] = true;
+
+        [Entities.PB_StoneMine1] = true;
+        [Entities.PB_StoneMine2] = true;
+        [Entities.PB_StoneMine3] = true;
+
+        [Entities.PB_SulfurMine1] = true;
+        [Entities.PB_SulfurMine2] = true;
+        [Entities.PB_SulfurMine3] = true;
+
+        [Entities.PB_Outpost1] = true;
+        [Entities.PB_Outpost2] = true;
+        [Entities.PB_Outpost3] = true;
+    };
+    for k,v in pairs(Entities) do
+        if not destroy_later[v] then
+            Network_Handler_Diplomacy_Self_Destruct_Helper(_PlayerID, v);
+        end;
+    end;
+    for k,v in pairs(destroy_later) do
+        Network_Handler_Diplomacy_Self_Destruct_Helper(_PlayerID, k);
+    end;
 end
 
 -- -------------------------------------------------------------------------- --
@@ -1943,6 +2042,14 @@ function Victory_Internal_OnEntityHurt()
         if Logic.IsHero(Attacked) == 1 then
             WT2022.Victory:SaveHeroAttacked(Attacker, Attacked);
         end
+    end
+end
+
+function Victory_Internal_OnEntityDestroyed()
+    local EntityID = Event.GetEntityID();
+    local PlayerID = Logic.EntityGetPlayer(EntityID);
+    if Logic.IsEntityInCategory(EntityID, EntityCategories.Headquarters) == 1 then
+        WT2022.Victory:ForcedSelfDesctruct(PlayerID);
     end
 end
 

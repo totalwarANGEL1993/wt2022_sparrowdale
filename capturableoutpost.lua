@@ -817,12 +817,38 @@ end
 
 -- -------------------------------------------------------------------------- --
 
+function WT2022.Outpost:GuardPlayerEntities(_AttackedID)
+    if not IsExisting(_AttackedID) or Logic.GetEntityHealth(_AttackedID) == 0 then
+        return;
+    end
+    local PlayerID = Logic.EntityGetPlayer(_AttackedID);
+    local BaseCenter = GetID("P" ..PlayerID.."_BaseCenter");
+    if Logic.GetNumberOfEntitiesOfTypeOfPlayer(PlayerID, Entities.CB_Bastille1) > 0 then
+        if Logic.CheckEntitiesDistance(_AttackedID, BaseCenter, 12000) == 1 then
+            MakeInvulnerable(_AttackedID)
+        else
+            MakeVulnerable(_AttackedID);
+            if EMS.PlayerList[PlayerID] then
+                EMS.RF.HQRP.UpdateInvulnerabilityStatus(PlayerID);
+            end
+        end
+    else
+        MakeVulnerable(_AttackedID);
+        if EMS.PlayerList[PlayerID] then
+            EMS.RF.HQRP.UpdateInvulnerabilityStatus(PlayerID);
+        end
+    end
+end
+
+-- -------------------------------------------------------------------------- --
+
 -- Outpost is captured when damaged enough and no allies remain.
 -- (Outpost can not be destroyed)
 function Outpost_Internal_OnEntityHurt()
     local Attacker = Event.GetEntityID1();
     local Attacked = Event.GetEntityID2();
     if Attacker and Attacked then
+        WT2022.Outpost:GuardPlayerEntities(Attacked);
         local AttackedName = Logic.GetEntityName(Attacked);
         if WT2022.Outpost.Outposts[AttackedName] then
             local AttackingPlayer = Logic.EntityGetPlayer(Attacker);
