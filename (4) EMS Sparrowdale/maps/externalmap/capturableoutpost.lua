@@ -136,14 +136,14 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
     self.SequenceID = self.SequenceID +1;
     self.Outposts[_ScriptName] = {
         Name = _DisplayName or ("Province " ..self.SequenceID),
-        Health = 3250,
-        MaxHealth = 3250,
+        Health = 3000,
+        MaxHealth = 3000,
         ArmorFactor = 4,
         DoorPos = _DoorPos,
         ResourceType = _ResourceType,
         OwningTeam = 0,
         ProductCount = 0,
-        ProductionValue = 3,
+        ProductionValue = 4,
         DeliverThreshold = 500,
         Explorer = 0,
 
@@ -153,24 +153,24 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
             [1] = {
                 Level = 0,
                 [1] = {
-                    Costs = {[ResourceType.Wood] = 550, [ResourceType.Iron] = 100},
+                    Costs = {[ResourceType.Wood] = 450, [ResourceType.Iron] = 100},
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
-                        WT2022.Outpost.Outposts[_ScriptName].ProductionValue = Data.ProductionValue + 1;
+                        WT2022.Outpost.Outposts[_ScriptName].ProductionValue = Data.ProductionValue + 4;
                     end
                 },
                 [2] = {
-                    Costs = {[ResourceType.Stone] = 600, [ResourceType.Wood] = 400},
+                    Costs = {[ResourceType.Stone] = 300, [ResourceType.Wood] = 400},
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
-                        WT2022.Outpost.Outposts[_ScriptName].ProductionValue = Data.ProductionValue + 1;
+                        WT2022.Outpost.Outposts[_ScriptName].ProductionValue = Data.ProductionValue + 4;
                     end
                 },
                 [3] = {
-                    Costs = {[ResourceType.Wood] = 1000, [ResourceType.Sulfur] = 600},
+                    Costs = {[ResourceType.Wood] = 700, [ResourceType.Sulfur] = 300},
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
-                        WT2022.Outpost.Outposts[_ScriptName].ProductionValue = Data.ProductionValue + 1;
+                        WT2022.Outpost.Outposts[_ScriptName].ProductionValue = Data.ProductionValue + 4;
                     end
                 },
             },
@@ -178,21 +178,21 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
             [2] = {
                 Level = 0,
                 [1] = {
-                    Costs = {[ResourceType.Gold] = 600, [ResourceType.Iron] = 600},
+                    Costs = {[ResourceType.Gold] = 200, [ResourceType.Iron] = 100},
                     Action = function(_ScriptName, _Level)
                         local X, Y = 100, 0;
                         WT2022.Outpost:CreateDefender(_ScriptName, X, Y);
                     end
                 },
                 [2] = {
-                    Costs = {[ResourceType.Gold] = 1500, [ResourceType.Wood] = 1500},
+                    Costs = {[ResourceType.Gold] = 400, [ResourceType.Wood] = 300},
                     Action = function(_ScriptName, _Level)
                         local X, Y = -100, 0;
                         WT2022.Outpost:CreateDefender(_ScriptName, X, Y);
                     end
                 },
                 [3] = {
-                    Costs = {[ResourceType.Gold] = 2750, [ResourceType.Iron] = 2850},
+                    Costs = {[ResourceType.Gold] = 600, [ResourceType.Iron] = 450},
                     Action = function(_ScriptName, _Level)
                         local X, Y = 0, 100;
                         WT2022.Outpost:CreateDefender(_ScriptName, X, Y);
@@ -203,31 +203,31 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
             [3] = {
                 Level = 0,
                 [1] = {
-                    Costs = {[ResourceType.Stone] = 150, [ResourceType.Clay] = 450},
+                    Costs = {[ResourceType.Stone] = 150, [ResourceType.Clay] = 150},
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
                         WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 1;
-                        WT2022.Outpost.Outposts[_ScriptName].MaxHealth = math.ceil(Data.MaxHealth + 250);
+                        WT2022.Outpost.Outposts[_ScriptName].MaxHealth = math.ceil(Data.MaxHealth + 1000);
                         WT2022.Outpost.Outposts[_ScriptName].Health = Data.MaxHealth;
                         SVLib.SetHPOfEntity(GetID(_ScriptName), 600);
                     end
                 },
                 [2] = {
-                    Costs = {[ResourceType.Stone] = 250, [ResourceType.Iron] = 750},
+                    Costs = {[ResourceType.Stone] = 200, [ResourceType.Iron] = 200},
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
                         WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 1;
-                        WT2022.Outpost.Outposts[_ScriptName].MaxHealth = math.ceil(Data.MaxHealth + 250);
+                        WT2022.Outpost.Outposts[_ScriptName].MaxHealth = math.ceil(Data.MaxHealth + 1000);
                         WT2022.Outpost.Outposts[_ScriptName].Health = Data.MaxHealth;
                         SVLib.SetHPOfEntity(GetID(_ScriptName), 600);
                     end
                 },
                 [3] = {
-                    Costs = {[ResourceType.Stone] = 950, [ResourceType.Clay] = 1250},
+                    Costs = {[ResourceType.Stone] = 400, [ResourceType.Clay] = 500},
                     Action = function(_ScriptName, _Level)
                         local Data = WT2022.Outpost.Outposts[_ScriptName];
                         WT2022.Outpost.Outposts[_ScriptName].ArmorFactor = Data.ArmorFactor + 2;
-                        WT2022.Outpost.Outposts[_ScriptName].MaxHealth = math.ceil(Data.MaxHealth + 250);
+                        WT2022.Outpost.Outposts[_ScriptName].MaxHealth = math.ceil(Data.MaxHealth + 1000);
                         WT2022.Outpost.Outposts[_ScriptName].Health = Data.MaxHealth;
                         SVLib.SetHPOfEntity(GetID(_ScriptName), 600);
                     end

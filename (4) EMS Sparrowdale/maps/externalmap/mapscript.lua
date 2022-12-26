@@ -22,3 +22,12 @@ if not initEMS() then
 	return;
 end
 
+local Path = "maps/externalmap/";
+if true then
+    Path = "E:/Siedler/Projekte/xmas2022koth/(4) EMS Sparrowdale/" ..Path;
+end
+Script.Load(Path.. "capturableoutpost.lua");
+Script.Load(Path.. "deliverycart.lua");
+Script.Load(Path.. "victoryconditions.lua");
+Script.Load(Path.. "comforts.lua");
+
