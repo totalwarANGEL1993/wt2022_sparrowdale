@@ -869,13 +869,12 @@ function WT2022.Outpost:GuardPlayerEntities(_AttackedID)
     if not IsExisting(_AttackedID) or Logic.GetEntityHealth(_AttackedID) == 0 then
         return;
     end
-    local Health = Logic.GetEntityHealth(_AttackedID);
     local Task = Logic.GetCurrentTaskList(_AttackedID);
     local PlayerID = Logic.EntityGetPlayer(_AttackedID);
     local BaseCenter = GetID("P" ..PlayerID.."_BaseCenter");
-    if Health > 0 and (not Task or not string.find(Task, "DIE")) then
+    if not Task or not string.find(Task, "DIE") then
         if Logic.GetNumberOfEntitiesOfTypeOfPlayer(PlayerID, Entities.CB_Bastille1) > 0 then
-            if Logic.CheckEntitiesDistance(_AttackedID, BaseCenter, 12000) == 1 then
+            if Logic.CheckEntitiesDistance(_AttackedID, BaseCenter, 9000) == 1 then
                 MakeInvulnerable(_AttackedID)
             else
                 MakeVulnerable(_AttackedID);
