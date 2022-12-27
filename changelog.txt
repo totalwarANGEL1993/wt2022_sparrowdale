@@ -1,0 +1,51 @@
+Sparrowdale Version 3
+
+Allgemeines:
+
+- Die Friedenszeit wurde auf 30 Minuten erhöht.
+- Die Startrohstoffe wurden angepasst.
+  Gold: 1200 (war 1000)
+  Lehm: 2000 (war 1800)
+  Holz: keine Änderung
+  Stein: 1200 (war 800)
+  Eisen: 150 (war 50)
+  Schwefel: 150 (war 50)
+- Es können 3 Marktplätze gebaut werden, die je 3000 Rohstoffe handeln können.
+  Außerdem wurde der Handelsbalancer aus BS eingebaut.
+- Es dürfen jetzt Aussichtsposten gebaut werden.
+  (Gebiete gegen Diebstahl absichern.)
+- Man kann während der Friedenszeit keinen Schnee machen.
+  (Nicht zwingend notwendig, da snow barriers auf den "Brücken" sind, aber
+   zumindest für den Spieler logischer.)
+
+Außenposten
+
+- Alle Ausbaukosten der Außenposten wurden stark reduziert.
+- Die Produktion der Außenposten wurde geändert. Ausbau der Produktion 
+  beschleunigt diese jetzt spürbar.
+  Produktionsrate: 4, 8, 12, 16 pro Sekunde
+- Die Verteidigung der Türme wurde angepasst.
+  Gesundheit: 3000, 3250, 3500, 3750
+  Rüstung: 6, 8, 10, 12
+- Die Berechnung der Rüstung wurde geändert. Jeder Rustungspunkt bewirkt
+  eine Schadensreduktion von 15%. Schadensarten sind irrelevant.
+  Beispiel:
+    12 Schaden, 6 Rüstung --> 5 Schaden
+    12 Schaden, 12 Rüstung --> 2 Schaden
+    30 Schaden, 6 Rüstung --> 11 Schaden
+    30 Schaden, 12 Rüstung --> 4 Schaden
+- Der Sichtbereich der Außenposten wurde drastisch erhöht
+- Solange ein Spieler einen Turm kontrolliert ist alles im größeren Umkreis
+  um die Burg unverwundbar.
+  (Das schließt weder die DZ noch die Minen mit ein.)
+- Verliert ein Spieler, wenn er noch Türme hat, dann werden sie dem Partner
+  übertragen, wenn dieser noch lebt.
+  (Das betrifft hauptsächlich Self Destruct.)
+- Die Türme sind sofort erreichbar, werden allerdings von Low-Tech Armeen
+  (4x Lanzenträger, 4x Banditenbogenschützen) bewacht.
+  Die Armeen respawnen nicht und refillen auch nicht.
+
+Handelskarren
+
+- Handelskarren können nicht mehr zerstört werden.
+  (Das war wegen eines Versehens möglich.)
