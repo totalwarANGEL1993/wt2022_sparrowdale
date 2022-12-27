@@ -12,7 +12,7 @@ EMS_CustomMapConfig = {
     -- * Configuration File Version
     -- * A version check will make sure every player has the same version of the configuration file
     -- ********************************************************************************************
-    Version = 1,
+    Version = 2,
 
     -- ********************************************************************************************
     -- * Callback_OnMapStart
@@ -140,6 +140,7 @@ EMS_CustomMapConfig = {
     -- ********************************************************************************************
     Callback_OnPeacetimeEnded = function()
         RemoveBlockRocksToMakePlayersAccessEachother();
+        RemoveBlockRocksToOpenCenter();
         -- Change weather for blocking reasons
         if Logic.GetWeatherState() == 1 then
             StartRain(30);
@@ -223,6 +224,14 @@ EMS_CustomMapConfig = {
     -- * (FastGame or SpeedGame)
     -- ********************************************************************************************
     Callback_OnFastGame = function()
+        Trigger.RequestTrigger(
+            Events.LOGIC_EVENT_GOODS_TRADED,
+            nil,
+            "TransactionDetails",
+            1,
+            nil,
+            nil
+        );
     end,
 
     -- ********************************************************************************************
@@ -372,35 +381,38 @@ function MakeBlockRocksInvisible()
 end
 
 function RemoveBlockRocksToMakeOutpostsAccessable()
-    DestroyEntity("RockBlock1_6");
-    DestroyEntity("RockBlock1_5");
-    DestroyEntity("RockBlock1_3");
     DestroyEntity("RockBlock1_2");
-    DestroyEntity("RockBlock2_5");
-    DestroyEntity("RockBlock2_4");
+    DestroyEntity("RockBlock1_3");
+    DestroyEntity("RockBlock1_5");
+    DestroyEntity("RockBlock1_6");
+    DestroyEntity("RockBlock2_1");
     DestroyEntity("RockBlock2_3");
-    DestroyEntity("RockBlock2_2");
-    DestroyEntity("RockBlock3_6");
-    DestroyEntity("RockBlock3_5");
-    DestroyEntity("RockBlock3_2");
+    DestroyEntity("RockBlock2_4");
+    DestroyEntity("RockBlock2_5");
     DestroyEntity("RockBlock3_1");
+    DestroyEntity("RockBlock3_2");
+    DestroyEntity("RockBlock3_5");
+    DestroyEntity("RockBlock3_4");
+    DestroyEntity("RockBlock4_1");
+    DestroyEntity("RockBlock4_2");
     DestroyEntity("RockBlock4_6");
     DestroyEntity("RockBlock4_5");
-    DestroyEntity("RockBlock4_3");
-    DestroyEntity("RockBlock4_1");
 end
 
 function RemoveBlockRocksToMakePlayersAccessEachother()
     DestroyEntity("RockBlock0_1");
     DestroyEntity("RockBlock0_2");
-    DestroyEntity("RockBlock1_4");
     DestroyEntity("RockBlock1_1");
-    DestroyEntity("RockBlock2_6");
+    DestroyEntity("RockBlock3_6");
     DestroyEntity("RockBlock2_1");
-    DestroyEntity("RockBlock3_4");
-    DestroyEntity("RockBlock3_3");
-    DestroyEntity("RockBlock4_4");
     DestroyEntity("RockBlock4_2");
+end
+
+function RemoveBlockRocksToOpenCenter()
+    DestroyEntity("RockBlock2_6");
+    DestroyEntity("RockBlock4_4");
+    DestroyEntity("RockBlock3_3");
+    DestroyEntity("RockBlock1_4");
 end
 
 function OnOutpostUpgradeStarted(_ScriptName, _UpgradeType, _NextUpgradeLevel)
@@ -448,5 +460,27 @@ function VictoryConditionQuestThievery(_PlayerID)
                   "2) Eine Lieferung umfasst 250 Rohstoffe (oder 500 wenn "..
                   "der Teampartner bereits verloren hat).";
     Logic.AddQuest(_PlayerID, 3, MAINQUEST_OPEN, Title, Text, 1);
+end
+
+-- -------------------------------------------------------------------------- --
+
+function TransactionDetails()
+    local eID = Event.GetEntityID();
+    local TSellTyp = Event.GetSellResource();
+    local TTyp = Event.GetBuyResource();
+    local PID = Logic.EntityGetPlayer(eID);
+
+    if Logic.GetCurrentPrice(PID,TSellTyp) > 1.3 then
+        Logic.SetCurrentPrice(PID, TSellTyp, 1.3);
+    end
+    if Logic.GetCurrentPrice(PID,TSellTyp) < 0.8 then
+        Logic.SetCurrentPrice(PID, TSellTyp, 0.8);
+    end
+    if Logic.GetCurrentPrice(PID,TTyp) > 1.3 then
+        Logic.SetCurrentPrice(PID, TTyp, 1.3);
+    end
+    if Logic.GetCurrentPrice(PID,TTyp) < 0.8 then
+        Logic.SetCurrentPrice(PID, TTyp, 0.8);
+    end
 end
 
