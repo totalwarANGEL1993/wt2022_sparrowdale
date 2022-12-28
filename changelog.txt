@@ -34,16 +34,11 @@ Außenposten
     12 Schaden, 12 Rüstung --> 2 Schaden
     30 Schaden, 6 Rüstung --> 11 Schaden
     30 Schaden, 12 Rüstung --> 4 Schaden
-- Der Sichtbereich der Außenposten wurde drastisch erhöht
-- Solange ein Spieler einen Turm kontrolliert ist alles im größeren Umkreis
-  um die Burg unverwundbar.
-  (Das schließt weder die DZ noch die Minen mit ein.)
-- Verliert ein Spieler, wenn er noch Türme hat, dann werden sie dem Partner
-  übertragen, wenn dieser noch lebt.
-  (Das betrifft hauptsächlich Self Destruct.)
-- Die Türme sind sofort erreichbar, werden allerdings von Low-Tech Armeen
-  (4x Lanzenträger, 4x Banditenbogenschützen) bewacht.
-  Die Armeen respawnen nicht und refillen auch nicht.
+- Der Sichtbereich der Außenposten wurde drastisch erhöht.
+- Die Türme sind sofort erreichbar, werden allerdings von Armeen bewacht.
+  (4x Streitlanzenträger, 4x Leichte Scharfschützen)
+- Verliert ein Spieler, wenn er noch Türme hat, erlangen die Provinzen ihre
+  Unabhängigkeit zurück und heben ihre Armee wieder aus.
 
 Handelskarren
 

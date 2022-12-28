@@ -12,7 +12,7 @@ EMS_CustomMapConfig = {
     -- * Configuration File Version
     -- * A version check will make sure every player has the same version of the configuration file
     -- ********************************************************************************************
-    Version = 3,
+    Version = 4,
 
     -- ********************************************************************************************
     -- * Callback_OnMapStart
@@ -42,6 +42,9 @@ EMS_CustomMapConfig = {
 
         -- Deliver resource to the players
         function GameCallback_User_OutpostProduceResource(_ScriptName, _SpawnPoint, _OwningTeam, _ResourceType, _Amount)
+            if _OwningTeam == 0 then
+                return;
+            end
             local Sender = WT2022.Outpost.Teams[_OwningTeam].Deliverer;
             local TeamData = WT2022.Outpost.Teams[_OwningTeam];
             local Amount1 = (IsExisting("HQ" ..TeamData[2]) and _Amount/2) or _Amount;
@@ -86,14 +89,23 @@ EMS_CustomMapConfig = {
             if not WT2022.Victory.Teams[_Team] then
                 return;
             end
-            local Index = (WT2022.Victory.Teams[_Team][1] == _PlayerID and 2) or 1;
-            local NewPlayer = WT2022.Victory.Teams[_Team][Index];
-            if Logic.PlayerGetGameState(NewPlayer) == 1 then
-                for i= 1, 8 do
-                    if Logic.EntityGetPlayer(GetID("OP" ..i)) == _PlayerID then
-                        WT2022.Outpost.Claim("OP" ..i, NewPlayer);
-                    end
+
+            -- change outpost player
+            local NewPlayer = 7;
+            for i= 1, 8 do
+                if Logic.EntityGetPlayer(GetID("OP" ..i)) == _PlayerID then
+                    WT2022.Outpost.Claim("OP" ..i, NewPlayer);
+                    WT2022.Victory.RegisterClaim(NewPlayer, "OP" ..i);
+                    WT2022.Outpost:EnlargeGuardianArmy("OP" ..i);
                 end
+            end
+
+            -- standard victory condition
+            if  Logic.PlayerGetGameState(WT2022.Victory.Teams[_Team][1]) > 1
+            and Logic.PlayerGetGameState(WT2022.Victory.Teams[_Team][2]) > 1 then
+                local OtherTeam = (_Team == 1 and 2) or 1;
+                Logic.PlayerSetGameStateToWon(WT2022.Victory.Teams[OtherTeam][1]);
+                Logic.PlayerSetGameStateToWon(WT2022.Victory.Teams[OtherTeam][2]);
             end
         end
     end,

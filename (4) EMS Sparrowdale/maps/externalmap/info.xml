@@ -3,7 +3,7 @@
  <NameKey>MapDescription/Peaceful_Land_name</NameKey>
  <DescKey>MapDescription/Peaceful_Land_desc</DescKey>
  <Name>(4) @color:135,205,255 EMS @color:255,255,255 Sparrowdale</Name>
- <Desc>@color:135,205,255 von totalwarANGEL @color:255,255,255 @cr @cr In den Ruinen der einst mächtigen Festung Sparrowdale kämpfen zwei verfeindete Parteien um die Vormachtstellung im englischen Morast. Doch die Rohstoffe sind rar. Hoheit über die Provinzen könnte der Schlüssel zum Sieg sein. Aber vielleicht führen unlautere Mittel eher zum Ziel?</Desc>
+ <Desc>@color:135,205,255 von totalwarANGEL @color:255,255,255 @cr @cr Vor grauen Jahren wart Sparrowdale ein mächtiges Bollwerk. Nun ist es ein Schatten seiner selbst. @cr @cr Zwei verfeindete Häuser kämpfen in den versumpften Ruinen um die Vorherrschaft. Werden sie klug sein und die unabhängigen Provinzen zum Vasallen machen? Oder reitz sie die schnelle Entscheidung in der direkten Konfrontation?</Desc>
  <SizeX>705</SizeX>
  <SizeY>705</SizeY>
  <MPFlag>true</MPFlag>

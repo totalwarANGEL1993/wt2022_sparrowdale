@@ -247,6 +247,7 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
     MakeInvulnerable(_ScriptName);
     self:CreateExplorerEntity(_ScriptName, 7);
     self:CreateGuardianArmy(_ScriptName);
+    self:EnlargeGuardianArmy(_ScriptName);
 end
 
 function WT2022.Outpost:CreateSyncEvent()
@@ -275,20 +276,6 @@ function WT2022.Outpost:CreateGuardianArmy(_ScriptName)
 		rodeLength 			= 2000,
 	}
 	SetupArmy(Army);
-    for i = 1, 4 do
-        EnlargeArmy(Army, {
-            maxNumberOfSoldiers = 4,
-            minNumberOfSoldiers = 4,
-            experiencePoints = VERYHIGH_EXPERIENCE,
-            leaderType = Entities.PU_LeaderPoleArm2
-        });
-        EnlargeArmy(Army, {
-            maxNumberOfSoldiers = 4,
-            minNumberOfSoldiers = 4,
-            experiencePoints = VERYHIGH_EXPERIENCE,
-            leaderType = Entities.CU_BanditLeaderBow1
-        });
-    end
 	Trigger.RequestTrigger(
         Events.LOGIC_EVENT_EVERY_SECOND,
         "",
@@ -299,6 +286,26 @@ function WT2022.Outpost:CreateGuardianArmy(_ScriptName)
     );
 
     self.Outposts[_ScriptName].Army = Army;
+end
+
+function WT2022.Outpost:EnlargeGuardianArmy(_ScriptName)
+    local Army = self.Outposts[_ScriptName].Army;
+    if Army then
+        for i = 1, 4 do
+            EnlargeArmy(Army, {
+                maxNumberOfSoldiers = 8,
+                minNumberOfSoldiers = 8,
+                experiencePoints = VERYHIGH_EXPERIENCE,
+                leaderType = Entities.PU_LeaderPoleArm3
+            });
+            EnlargeArmy(Army, {
+                maxNumberOfSoldiers = 4,
+                minNumberOfSoldiers = 4,
+                experiencePoints = VERYHIGH_EXPERIENCE,
+                leaderType = Entities.PU_LeaderRifle1
+            });
+        end
+    end
 end
 
 function WT2022.Outpost:CreateExplorerEntity(_ScriptName, _PlayerID)
@@ -379,16 +386,22 @@ end
 function WT2022.Outpost:ClaimOutpost(_ScriptName, _OldPlayer, _NewPlayer, _TeamID)
     local MaxHealth = Logic.GetEntityMaxHealth(GetID(_ScriptName));
     local NewPlayer = _OldPlayer;
+
+    if _TeamID == 0 then
+        NewPlayer = 7;
+    end
     if self.Teams[_TeamID] then
         NewPlayer = _NewPlayer;
         self:DisplayClaimMessage(_ScriptName, _NewPlayer);
     end
+
     if _OldPlayer == 7 then
         local Army = self.Outposts[_ScriptName].Army
         if Army then
             DestroyArmy(_OldPlayer, Army.id);
         end
     end
+
     SVLib.SetHPOfEntity(GetID(_ScriptName), MaxHealth);
     ChangePlayer(_ScriptName, NewPlayer);
     MakeInvulnerable(_ScriptName);
@@ -397,6 +410,7 @@ function WT2022.Outpost:ClaimOutpost(_ScriptName, _OldPlayer, _NewPlayer, _TeamI
         SVLib.SetInvisibility(GetID(v), true);
         MakeInvulnerable(v);
     end
+
     self.Outposts[_ScriptName].OwningTeam = _TeamID;
     self.Outposts[_ScriptName].Health = self.Outposts[_ScriptName].MaxHealth;
     self:CreateExplorerEntity(_ScriptName, NewPlayer);
@@ -899,7 +913,8 @@ function Outpost_Internal_OnEntityHurt()
     local Attacker = Event.GetEntityID1();
     local Attacked = Event.GetEntityID2();
     if Attacker and Attacked then
-        WT2022.Outpost:GuardPlayerEntities(Attacked);
+        -- Let's do noch cripple rush...
+        -- WT2022.Outpost:GuardPlayerEntities(Attacked);
         local AttackedName = Logic.GetEntityName(Attacked);
         if WT2022.Outpost.Outposts[AttackedName] then
             local AttackingPlayer = Logic.EntityGetPlayer(Attacker);
@@ -969,11 +984,11 @@ end
 function Outpost_Internal_ControlArmy(_ScriptName)
     local Army = WT2022.Outpost.Outposts[_ScriptName].Army;
     if Army then
-        if Logic.EntityGetPlayer(GetID(_ScriptName)) ~= 7 then
-            if AI.Army_GetNumberOfTroops(Army.player, Army.id) == 0 then
-                return true;
-            end
-        end
+        -- if Logic.EntityGetPlayer(GetID(_ScriptName)) ~= 7 then
+        --     if AI.Army_GetNumberOfTroops(Army.player, Army.id) == 0 then
+        --         return true;
+        --     end
+        -- end
         if math.mod(Logic.GetTime(), 10) == 0 then
             Defend(Army);
         end

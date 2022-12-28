@@ -89,7 +89,7 @@ function WT2022.Delivery:CreateCart(_SenderID, _ReceiverID, _Position, _Resource
     local ID = AI.Entity_CreateFormation(_SenderID, Entities.PU_Serf, nil, 0, _Position.X, _Position.Y, nil, nil, 0, 0);
     Logic.SetEntityName(ID, "WT2022_Delivery" ..self.SequenceID);
     SVLib.SetInvisibility(ID, true);
-    MakeInvulnerable(ID);
+    MakeInvulnerable("WT2022_Delivery" ..self.SequenceID);
     self.Carts["WT2022_Delivery" ..self.SequenceID] = {
         OriginalReceiver = _ReceiverID,
         Receiver = _ReceiverID,
@@ -153,6 +153,15 @@ function Delivery_Internal_OnEntityHurt()
     if Attacker and Attacked then
         local AttackedName = Logic.GetEntityName(Attacked);
         if WT2022.Delivery.Carts[AttackedName] then
+            -- Make trader invincible
+            local Health = Logic.GetEntityHealth(Attacked)
+            local Task = Logic.GetCurrentTaskList(Attacked);
+            if Health > 0 and (not Task or not string.find(Task, "DIE")) then
+                Logic.HealEntity(Attacked, 700);
+            end
+            MakeInvulnerable(AttackedName);
+
+            -- Check trader attacked by thieves
             if Logic.GetEntityType(Attacker) == Entities.PU_Thief then
                 local AttackerPlayerID = Logic.EntityGetPlayer(Attacker);
                 local Position = GetPosition(AttackedName);
@@ -175,8 +184,8 @@ function Delivery_Internal_OnEverySecond()
             WT2022.Delivery.Carts[k] = nil;
         else
             if Logic.GetEntityType(GetID(k)) ~= Entities.PU_Travelling_Salesman then
-                ReplaceEntity(k, Entities.PU_Travelling_Salesman);
-                MakeInvulnerable(k);
+                local ID = ReplaceEntity(k, Entities.PU_Travelling_Salesman);
+                MakeInvulnerable(ID);
             end
             if Logic.IsEntityMoving(GetID(k)) == false then
                 local Position = GetPosition(v.Destination);

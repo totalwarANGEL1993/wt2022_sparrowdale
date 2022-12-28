@@ -427,7 +427,7 @@ function WT2022.Victory:CreateCompensationHeap(_ScriptName, _OldPlayer, _NewPlay
         ID = Logic.CreateEntity(EntityType, x, y, 0, 0);
         Logic.SetEntityName(ID, HeapPos.. "Heap");
     end
-    Logic.SetResourceDoodadGoodAmount(ID, 1500);
+    Logic.SetResourceDoodadGoodAmount(ID, 2000);
 end
 
 function WT2022.Victory:GetCompensationResourceHeapType(_ScriptName)
