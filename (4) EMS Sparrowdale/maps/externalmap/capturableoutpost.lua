@@ -247,7 +247,6 @@ function WT2022.Outpost:CreateOutpost(_ScriptName, _DoorPos, _ResourceType, _Dis
     MakeInvulnerable(_ScriptName);
     self:CreateExplorerEntity(_ScriptName, 7);
     self:CreateGuardianArmy(_ScriptName);
-    self:EnlargeGuardianArmy(_ScriptName);
 end
 
 function WT2022.Outpost:CreateSyncEvent()
@@ -276,6 +275,20 @@ function WT2022.Outpost:CreateGuardianArmy(_ScriptName)
 		rodeLength 			= 2000,
 	}
 	SetupArmy(Army);
+    for i = 1, 4 do
+        EnlargeArmy(Army, {
+            maxNumberOfSoldiers = 4,
+            minNumberOfSoldiers = 4,
+            experiencePoints = VERYHIGH_EXPERIENCE,
+            leaderType = Entities.PU_LeaderPoleArm2
+        });
+        EnlargeArmy(Army, {
+            maxNumberOfSoldiers = 4,
+            minNumberOfSoldiers = 4,
+            experiencePoints = VERYHIGH_EXPERIENCE,
+            leaderType = Entities.PU_LeaderBow2
+        });
+    end
 	Trigger.RequestTrigger(
         Events.LOGIC_EVENT_EVERY_SECOND,
         "",
