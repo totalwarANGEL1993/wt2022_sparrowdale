@@ -1,4 +1,4 @@
-Sparrowdale Version 3
+Sparrowdale Version 4
 
 Allgemeines:
 
@@ -36,9 +36,10 @@ Außenposten
     30 Schaden, 12 Rüstung --> 4 Schaden
 - Der Sichtbereich der Außenposten wurde drastisch erhöht.
 - Die Türme sind sofort erreichbar, werden allerdings von Armeen bewacht.
-  (4x Streitlanzenträger, 4x Leichte Scharfschützen)
+  (4x Lanzenträger, 4x Langbogenschützen)
 - Verliert ein Spieler, wenn er noch Türme hat, erlangen die Provinzen ihre
   Unabhängigkeit zurück und heben ihre Armee wieder aus.
+  (4x Streitlanzenträger, 4x Leichte Scharfschützen)
 
 Handelskarren
 

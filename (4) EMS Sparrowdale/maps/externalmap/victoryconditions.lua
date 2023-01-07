@@ -236,7 +236,6 @@ function WT2022.Victory:CheckOutpostAmountFavoredTeam()
         if self.ControlledOutposts[2] then
             local Amount = table.getn(self.ControlledOutposts[2]);
             if Amount >= self.ControlledOutposts.MaxAmount then
-                self.ControlledOutposts.Timer = self.ControlledOutposts.Timer -1;
                 if self:IsTimerVisible() then
                     self.ControlledOutposts.Timer = self.ControlledOutposts.Timer -1;
                     if self.ControlledOutposts.Timer == 0 then

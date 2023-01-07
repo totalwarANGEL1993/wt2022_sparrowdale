@@ -12,7 +12,7 @@ EMS_CustomMapConfig = {
     -- * Configuration File Version
     -- * A version check will make sure every player has the same version of the configuration file
     -- ********************************************************************************************
-    Version = 4,
+    Version = 7,
 
     -- ********************************************************************************************
     -- * Callback_OnMapStart
@@ -64,11 +64,19 @@ EMS_CustomMapConfig = {
 
         -- An outpost was claimed
         function GameCallback_User_OutpostClaimed(_ScriptName, _OldPlayer, _NewPlayer, _TeamOfCapturer, _OutpostPlayerID)
-            GUIQuestTools.ToggleStopWatch(0, 0);
+            -- while peacetime the timer can not be toggled due to making the
+            -- peacetime timer dissapear. The timer is not needed anyway when
+            -- players can not reach all outpost.
+
+            if gvPeacetimeIsOver then
+                GUIQuestTools.ToggleStopWatch(0, 0);
+            end
             WT2022.Victory.SetTimer(-1);
             WT2022.Victory.RegisterClaim(_NewPlayer, _ScriptName);
             if WT2022.Victory:DoesOneTeamControllAllOutposts() then
-                GUIQuestTools.ToggleStopWatch(5*60, 1);
+                if gvPeacetimeIsOver then
+                    GUIQuestTools.ToggleStopWatch(5*60, 1);
+                end
                 WT2022.Victory.SetTimer(5*60);
             end
             WT2022.Victory:CreateCompensationHeap(_ScriptName, _OldPlayer, _NewPlayer);
@@ -151,6 +159,7 @@ EMS_CustomMapConfig = {
     -- * Called when the peacetime counter reaches zero
     -- ********************************************************************************************
     Callback_OnPeacetimeEnded = function()
+        gvPeacetimeIsOver = true;
         RemoveBlockRocksToMakePlayersAccessEachother();
         RemoveBlockRocksToOpenCenter();
         -- Change weather for blocking reasons
@@ -397,34 +406,34 @@ function RemoveBlockRocksToMakeOutpostsAccessable()
     DestroyEntity("RockBlock1_3");
     DestroyEntity("RockBlock1_5");
     DestroyEntity("RockBlock1_6");
-    DestroyEntity("RockBlock2_1");
+    DestroyEntity("RockBlock2_2");
     DestroyEntity("RockBlock2_3");
     DestroyEntity("RockBlock2_4");
     DestroyEntity("RockBlock2_5");
     DestroyEntity("RockBlock3_1");
     DestroyEntity("RockBlock3_2");
-    DestroyEntity("RockBlock3_5");
     DestroyEntity("RockBlock3_4");
+    DestroyEntity("RockBlock3_5");
     DestroyEntity("RockBlock4_1");
-    DestroyEntity("RockBlock4_2");
-    DestroyEntity("RockBlock4_6");
+    DestroyEntity("RockBlock4_3");
     DestroyEntity("RockBlock4_5");
+    DestroyEntity("RockBlock4_6");
 end
 
 function RemoveBlockRocksToMakePlayersAccessEachother()
     DestroyEntity("RockBlock0_1");
     DestroyEntity("RockBlock0_2");
     DestroyEntity("RockBlock1_1");
-    DestroyEntity("RockBlock3_6");
     DestroyEntity("RockBlock2_1");
+    DestroyEntity("RockBlock3_6");
     DestroyEntity("RockBlock4_2");
 end
 
 function RemoveBlockRocksToOpenCenter()
-    DestroyEntity("RockBlock2_6");
-    DestroyEntity("RockBlock4_4");
-    DestroyEntity("RockBlock3_3");
     DestroyEntity("RockBlock1_4");
+    DestroyEntity("RockBlock2_6");
+    DestroyEntity("RockBlock3_3");
+    DestroyEntity("RockBlock4_4");
 end
 
 function OnOutpostUpgradeStarted(_ScriptName, _UpgradeType, _NextUpgradeLevel)
@@ -437,40 +446,38 @@ end
 
 function VictoryConditionQuestDomincance(_PlayerID)
     local Title = "Siegbedingung: AUSLÖSCHUNG";
-    local Text  = "Das Team dem es gelingt, das gegnerische Team zu "..
-                  "vernichten, hat gewonnen. @cr @cr Hinweise: @cr @cr "..
-                  "1) Ob schnelle Siege wie z.B. durch Rush möglich sind "..
-                  "oder nicht, hängt von den EMS-Einstellungen ab. @cr "..
-                  "2) Gebäude in der Basis können nicht zerstört werden, "..
-                  "solange noch Außenposten kontrolliert werden.";
+    local Text  = "Das Team dem es gelingt, das gegnerische Team zu"..
+                  " vernichten, hat gewonnen. @cr @cr Hinweise: @cr @cr "..
+                  " 1) Ob schnelle Siege wie z.B. durch Rush möglich sind"..
+                  " oder nicht, hängt von den EMS-Einstellungen ab.";
     Logic.AddQuest(_PlayerID, 1, MAINQUEST_OPEN, Title, Text, 1);
 end
 
 function VictoryConditionQuestTactical(_PlayerID)
     local Title = "Siegbedingung: VORHERRSCHAFT";
-    local Text  = "Das Team dem es gelingt, alle Außenposten zu erobern "..
-                  "und 5 Minuten zu halten, hat gewonnen."..
+    local Text  = "Das Team dem es gelingt, alle Außenposten zu erobern"..
+                  " und 5 Minuten zu halten, hat gewonnen."..
                   " @cr @cr Hinweise: @cr @cr "..
-                  "1) Außenposten werden beansprucht, in dem sie zu einem "..
+                  " 1) Außenposten werden beansprucht, in dem sie zu einem"..
                   " gewissen Grad beschädigt werden. @cr "..
-                  "2) Gebäude in der Basis können nicht zerstört werden, "..
-                  "solange noch Außenposten kontrolliert werden. @cr "..
-                  "3) Außenposten produzieren veredelbare Rohstoffe und"..
+                  " 2) Solange Verbündete des Besitzers in der Nähe sind,"..
+                  " kann der Turm nicht übernommen werden. @cr "..
+                  " 3) Außenposten produzieren veredelbare Rohstoffe und"..
                   " können durch Upgrades verbessert werden. @cr "..
-                  "4) Eine Lieferung umfasst 250 Rohstoffe (oder 500 wenn "..
-                  "der Teampartner bereits verloren hat).";
+                  " 4) Eine Lieferung umfasst 250 Rohstoffe (oder 500 wenn"..
+                  " der Teampartner bereits verloren hat).";
     Logic.AddQuest(_PlayerID, 2, MAINQUEST_OPEN, Title, Text, 1);
 end
 
 function VictoryConditionQuestThievery(_PlayerID)
     local Title = "Siegbedingung: DIEBESKUNST";
-    local Text  = "Das Team dem es gelingt, Warenlieferungen von 10000 "..
-                  "Einheiten zu erbeuten, hat gewonnen."..
-                  " @cr @cr Hinweise: @cr @cr "..
-                  "1) Diebe können Handelskarren angreifen, wodurch diese "..
-                  "den Besitzer und ihr Ziel wechseln. @cr "..
-                  "2) Eine Lieferung umfasst 250 Rohstoffe (oder 500 wenn "..
-                  "der Teampartner bereits verloren hat).";
+    local Text  = "Das Team dem es gelingt, Warenlieferungen von 10000"..
+                  " Einheiten zu erbeuten, hat gewonnen."..
+                  "  @cr @cr Hinweise: @cr @cr "..
+                  " 1) Diebe können Handelskarren angreifen, wodurch diese"..
+                  " den Besitzer und ihr Ziel wechseln. @cr "..
+                  " 2) Eine Lieferung umfasst 250 Rohstoffe (oder 500 wenn"..
+                  " der Teampartner bereits verloren hat).";
     Logic.AddQuest(_PlayerID, 3, MAINQUEST_OPEN, Title, Text, 1);
 end
 
